@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "commonlit_readability_prize"
+version = "0.1.0"
+description = ""
+authors = ["konumaru <konumaru1022@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.8.7"
+nltk = "^3.6.2"
+torch = "^1.8.1"
+numpy = "^1.20.2"
+pandas = "^1.2.4"
+joblib = "^1.0.1"
+textstat = "^0.7.0"
+tokenization = "^1.0.7"
+transformers = "^4.5.1"
+scikit-learn = "^0.24.2"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+jupyterlab = "^3.0.14"
+black = "^21.5b0"
+pycodestyle = "^2.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
