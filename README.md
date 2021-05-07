@@ -1,1 +1,1 @@
-# commonLit_readability_prize
+# CommonLit Readability Prize
