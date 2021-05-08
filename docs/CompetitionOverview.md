@@ -32,7 +32,7 @@
 
   - target のサンプル数が少ない分布に合わせて変化している様子
 
-    ![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/85265b31-1aae-4264-8d45-388aa48af8fd/_2021-05-07_23.03.57.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/85265b31-1aae-4264-8d45-388aa48af8fd/_2021-05-07_23.03.57.png)
+    ![img](https://user-images.githubusercontent.com/17187586/117521366-62375900-afe8-11eb-8838-d6ad5c5ea84d.png)
 
 - Target は比較的既存の Flesch-Kincaid Grade Level で定められているルールに相関を持っていそう
 
