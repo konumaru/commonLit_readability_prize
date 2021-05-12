@@ -20,6 +20,7 @@
 
 ### データについて
 
+- 学習データが 2,800 行と少ないのが特徴的
 - Test Data には Train Data よりも現代のテキストが若干多い
 - 公開 Test Data にはライセンス情報が含まれているが、非公開 Test Data には license, url_legal の情報は含まれていない
 
