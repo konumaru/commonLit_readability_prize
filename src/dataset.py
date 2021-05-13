@@ -1,6 +1,8 @@
 import pathlib
+from typing import Optional
 
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -37,17 +39,35 @@ class CommonLitDataset(Dataset):
 
 
 class CommonLitDataModule(pl.LightningDataModule):
-    def __init__(self):
+    def __init__(self, data_dir: str, batch_size: int = 32):
         super(CommonLitDataModule, self).__init__()
+        self.data_dir = pathlib.Path(data_dir)
+        self.batch_size = batch_size
 
-    def setup(self, stage=None):
-        pass
+    def setup(self, stage: Optional[str] = None):
+        self.train = pd.read_pickle(self.data_dir / "train.pkl")
+        self.valid = pd.read_pickle(self.data_dir / "valid.pkl")
 
     def train_dataloader(self):
-        return super().train_dataloader()
+        dataset = CommonLitDataset(self.train["target"], self.train["excerpt"])
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
 
     def val_dataloader(self):
-        return super().val_dataloader()
+        dataset = CommonLitDataset(self.valid["target"], self.valid["excerpt"])
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
 
     def test_dataloader(self):
-        return super().test_dataloader()
+        dataset = CommonLitDataset(self.valid["target"], self.valid["excerpt"])
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
