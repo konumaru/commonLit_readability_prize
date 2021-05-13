@@ -5,43 +5,26 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import transformers
+from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
-from transformers import (
-    AdamW,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    BertConfig,
-    BertModel,
-    BertTokenizer,
-    get_linear_schedule_with_warmup,
-)
+from transformers import BertTokenizer
 
-
-class CommonLitBertModel(nn.Module):
-    def __init__(self):
-        super(CommonLitBertModel, self).__init__()
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
-        self.out = nn.Linear(768, 1)
-
-    def forward(self, batch):
-        ids, mask, token_type_ids = (
-            batch["input_ids"],
-            batch["attention_mask"],
-            batch["token_type_ids"],
-        )
-        _, output = self.bert(
-            ids,
-            attention_mask=mask,
-            token_type_ids=token_type_ids,
-            return_dict=False,
-        )
-        output = self.out(output)
-        return output
+from dataset import CommonLitDataModule
+from model import CommonLitModel
 
 
 def main():
-    pass
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
+    datamodule = CommonLitDataModule("../data/split/fold_0", tokenizer, 32)
+    datamodule.setup()
+
+    model = CommonLitModel()
+    trainer = Trainer(
+        max_epochs=3,
+        fast_dev_run=1,
+    )
+    trainer.fit(model=model, datamodule=datamodule)
 
 
 if __name__ == "__main__":
-    main
+    main()

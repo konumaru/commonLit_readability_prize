@@ -9,9 +9,9 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class CommonLitDataset(Dataset):
-    def __init__(self, target, excerpt, tokenizer, max_len):
-        self.target = target
-        self.excerpt = excerpt
+    def __init__(self, data, tokenizer, max_len=100):
+        self.target = data[["target"]].to_numpy()
+        self.excerpt = data[["excerpt"]].to_numpy()
         self.tokenizer = tokenizer
         self.max_len = max_len
 
@@ -34,14 +34,15 @@ class CommonLitDataset(Dataset):
             "input_ids": torch.tensor(ids, dtype=torch.long),
             "attention_mask": torch.tensor(mask, dtype=torch.long),
             "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
-            "target": torch.tensor(target, dtype=torch.double),
+            "target": torch.tensor(target, dtype=torch.float32),
         }
 
 
 class CommonLitDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size: int = 32):
+    def __init__(self, data_dir: str, tokenizer, batch_size: int = 32):
         super(CommonLitDataModule, self).__init__()
         self.data_dir = pathlib.Path(data_dir)
+        self.tokenizer = tokenizer
         self.batch_size = batch_size
 
     def setup(self, stage: Optional[str] = None):
@@ -49,25 +50,31 @@ class CommonLitDataModule(pl.LightningDataModule):
         self.valid = pd.read_pickle(self.data_dir / "valid.pkl")
 
     def train_dataloader(self):
-        dataset = CommonLitDataset(self.train["target"], self.train["excerpt"])
+        dataset = CommonLitDataset(self.train, self.tokenizer)
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
+            num_workers=4,
             shuffle=True,
+            drop_last=True,
         )
 
     def val_dataloader(self):
-        dataset = CommonLitDataset(self.valid["target"], self.valid["excerpt"])
+        dataset = CommonLitDataset(self.valid, self.tokenizer)
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            num_workers=4,
+            shuffle=False,
+            drop_last=False,
         )
 
     def test_dataloader(self):
-        dataset = CommonLitDataset(self.valid["target"], self.valid["excerpt"])
+        dataset = CommonLitDataset(self.valid, self.tokenizer)
         return DataLoader(
             dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            num_workers=4,
+            shuffle=False,
+            drop_last=False,
         )
