@@ -3,6 +3,9 @@ name = "commonlit_readability_prize"
 version = "0.1.0"
 description = ""
 authors = ["konumaru <konumaru1022@gmail.com>"]
+packages = [
+    { include = "src/*.py", from = "lib" },
+]
 
 [tool.poetry.dependencies]
 python = "3.8.7"
@@ -21,6 +24,7 @@ rich = "^10.1.0"
 plotly = "^4.14.3"
 pandarallel = "^1.5.2"
 seaborn = "^0.11.1"
+pytorch-lightning = "^1.3.1"
 
 
 [tool.poetry.dev-dependencies]
@@ -28,7 +32,11 @@ pytest = "^6.2.4"
 jupyterlab = "^3.0.14"
 black = "^21.5b0"
 pycodestyle = "^2.7.0"
+isort = "^5.8.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
