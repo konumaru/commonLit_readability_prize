@@ -24,13 +24,14 @@ class CommonLitDataset(Dataset):
 
         ids = inputs["input_ids"]
         mask = inputs["attention_mask"]
-        token_id = inputs["token_type_ids"]
+        token_type_ids = inputs["token_type_ids"]
 
         target = self.target[item]
 
         return {
             "input_ids": torch.tensor(ids, dtype=torch.long),
             "attention_mask": torch.tensor(mask, dtype=torch.long),
+            "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
             "target": torch.tensor(target, dtype=torch.double),
         }
 
