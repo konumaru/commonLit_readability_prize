@@ -18,17 +18,20 @@ class CommonLitDataset(Dataset):
     def __len__(self):
         return len(self.excerpt)
 
-    def __getitem__(self, item):
-        text = str(self.excerpt[item])
+    def __getitem__(self, idx):
+        text = str(self.excerpt[idx])
         inputs = self.tokenizer(
-            text, max_length=self.max_len, padding="max_length", truncation=True
+            text,
+            max_length=self.max_len,
+            padding="max_length",
+            truncation=True,
         )
 
         ids = inputs["input_ids"]
         mask = inputs["attention_mask"]
         token_type_ids = inputs["token_type_ids"]
 
-        target = self.target[item]
+        target = self.target[idx]
 
         return {
             "input_ids": torch.tensor(ids, dtype=torch.long),

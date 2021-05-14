@@ -15,6 +15,17 @@ from transformers import (
 )
 
 
+class RMSELoss(nn.Module):
+    def __init__(self, eps=1e-6):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.eps = eps
+
+    def forward(self, yhat, y):
+        loss = torch.sqrt(self.mse(yhat, y) + self.eps)
+        return loss
+
+
 class CommonLitBertModel(nn.Module):
     def __init__(self):
         super(CommonLitBertModel, self).__init__()
@@ -38,10 +49,11 @@ class CommonLitBertModel(nn.Module):
 
 
 class CommonLitModel(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, base_model, lr=1e-4):
         super(CommonLitModel, self).__init__()
-        self.model = CommonLitBertModel()
-        self.loss_fn = nn.MSELoss()
+        self.lr = lr
+        self.model = base_model
+        self.loss_fn = RMSELoss()  # nn.MSELoss()
 
     def forward(self, batch):
         z = self.model(batch)
@@ -60,7 +72,7 @@ class CommonLitModel(pl.LightningModule):
 
         optimizer = torch.optim.AdamW(
             self.parameters(),
-            lr=1e-4,
+            lr=self.lr,
             betas=(0.9, 0.999),
             eps=1e-08,
             weight_decay=1e-2,

@@ -11,27 +11,31 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import BertTokenizer
 
 from dataset import CommonLitDataModule
-from model import CommonLitModel
+from model import CommonLitBertModel, CommonLitModel
 
 
 def main():
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
-    datamodule = CommonLitDataModule("../data/split/fold_0", tokenizer, 32)
-    datamodule.setup()
 
-    tb_logger = TensorBoardLogger(
-        save_dir="../tb_logs",
-        name="Debug",
-    )
+    for n_fold in range(5):
+        datamodule = CommonLitDataModule(f"../data/split/fold_{n_fold}/", tokenizer, 32)
+        datamodule.setup()
 
-    model = CommonLitModel()
-    trainer = Trainer(
-        max_epochs=10,
-        fast_dev_run=1,
-        logger=tb_logger,
-    )
-    trainer.fit(model=model, datamodule=datamodule)
-    trainer.test(model=model, datamodule=datamodule)
+        tb_logger = TensorBoardLogger(
+            save_dir="../tb_logs",
+            name="Debug",
+        )
+
+        model = CommonLitModel(base_model=CommonLitBertModel())
+        trainer = Trainer(
+            max_epochs=10,
+            fast_dev_run=1,
+            logger=tb_logger,
+        )
+        trainer.fit(model=model, datamodule=datamodule)
+        trainer.test(model=model, datamodule=datamodule)
+
+        break
 
 
 if __name__ == "__main__":
