@@ -3,9 +3,6 @@ name = "commonlit_readability_prize"
 version = "0.1.0"
 description = ""
 authors = ["konumaru <konumaru1022@gmail.com>"]
-packages = [
-    { include = "src/*.py", from = "lib" },
-]
 
 [tool.poetry.dependencies]
 python = "3.8.7"

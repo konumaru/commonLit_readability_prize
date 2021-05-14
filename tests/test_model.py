@@ -3,6 +3,7 @@ import warnings
 warnings.simplefilter("ignore")
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from torch.utils.data import DataLoader
@@ -14,21 +15,19 @@ from src.train import CommonLitBertModel
 
 @pytest.fixture
 def sample_dataset():
-    sample_text = [
+    data = pd.DataFrame()
+    data["excerpt"] = [
         "Hello world!",
         "What is the name of the repository ?",
         "This library is not a modular toolbox of building blocks for neural nets.",
     ]
+    data["target"] = np.random.rand(3, 1)
 
-    target = np.random.rand(len(sample_text), 1)
     model_path = "bert-base-uncased"
-
     model = BertModel.from_pretrained(model_path)
     tokenizer = BertTokenizer.from_pretrained(model_path)
 
-    dataset = CommonLitDataset(
-        target, excerpt=sample_text, tokenizer=tokenizer, max_len=100
-    )
+    dataset = CommonLitDataset(data, tokenizer=tokenizer, max_len=100)
     return dataset
 
 
