@@ -1,4 +1,6 @@
 import pytorch_lightning as pl
+import pytorch_warmup as warmup
+import torch
 import torch.nn as nn
 from transformers import (
     AdamW,
@@ -44,8 +46,25 @@ class CommonLitModel(pl.LightningModule):
         return z
 
     def configure_optimizers(self):
-        optimizer = AdamW(self.parameters(), lr=1e-4)
-        return optimizer
+        def lr_warmup(epoch):
+            warm_up_step = 10
+            if epoch < warm_up_step:
+                # warm up lr
+                lr_scale = 0.1 ** (warm_up_step - epoch)
+            else:
+                lr_scale = 0.95 ** epoch
+
+            return lr_scale
+
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=1e-4,
+            betas=(0.9, 0.999),
+            eps=1e-08,
+            weight_decay=1e-2,
+        )
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_warmup)
+        return [optimizer], [scheduler]
 
     def configure_callbacks(self):
         # early_stop = EarlyStopping(monitor="val_acc", mode="max")

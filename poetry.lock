@@ -1362,6 +1362,17 @@ loggers = ["neptune-client (>=0.4.109)", "comet-ml (>=3.1.12)", "mlflow (>=1.0.0
 test = ["coverage (>5.2.0)", "codecov (>=2.1)", "pytest (>=6.0)", "flake8 (>=3.6)", "check-manifest", "twine (==3.2)", "isort (>=5.6.4)", "mypy (>=0.720,<0.800)", "pre-commit (>=1.0)", "cloudpickle (>=1.3)", "scikit-learn (>0.22.1)", "scikit-image (>0.17.1)", "nltk (>=3.3)", "pandas"]
 
 [[package]]
+name = "pytorch-warmup"
+version = "0.0.4"
+description = "A PyTorch Extension for Learning Rate Warmup"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+torch = ">=1.1"
+
+[[package]]
 name = "pytz"
 version = "2021.1"
 description = "World timezone definitions, modern and historical"
@@ -1901,7 +1912,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.7"
-content-hash = "72c3fdc5af01d551e013c741cd923b3868322c27d5016294f51b2b2f6d21541e"
+content-hash = "761ebcf17e32c7ea85e9562657033aa2265371c909892478a5ccb89377667739"
 
 [metadata.files]
 absl-py = [
@@ -2674,6 +2685,10 @@ python-dateutil = [
 pytorch-lightning = [
     {file = "pytorch-lightning-1.3.1.tar.gz", hash = "sha256:877d2f3d6a04aa7aed67612331d1286502f006ada64ad8f81e3a669a2aa8c4e9"},
     {file = "pytorch_lightning-1.3.1-py3-none-any.whl", hash = "sha256:9d226771998daada369d242561572bc96677de2501c20f14e174dff1a6e9b7a8"},
+]
+pytorch-warmup = [
+    {file = "pytorch-warmup-0.0.4.tar.gz", hash = "sha256:9c630ac77a76f594492ffad8ccd5015aa5c946aee71525f867a86c88aaacd922"},
+    {file = "pytorch_warmup-0.0.4-py3-none-any.whl", hash = "sha256:38110440a51840120732844e1e312227bb787a2e675589c241484b95a6d515bc"},
 ]
 pytz = [
     {file = "pytz-2021.1-py2.py3-none-any.whl", hash = "sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798"},

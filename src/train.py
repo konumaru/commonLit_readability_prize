@@ -18,6 +18,9 @@ def main():
     datamodule = CommonLitDataModule("../data/split/fold_0", tokenizer, 32)
     datamodule.setup()
 
+    train_dataloader_len = len(datamodule.train_dataloader())
+    print(train_dataloader_len)
+
     model = CommonLitModel()
     trainer = Trainer(
         max_epochs=3,
