@@ -10,7 +10,8 @@ from transformers import (
     AutoTokenizer,
     BertConfig,
     BertModel,
-    BertTokenizer,
+    RobertaModel,
+    get_cosine_schedule_with_warmup,
     get_linear_schedule_with_warmup,
 )
 
@@ -48,10 +49,33 @@ class CommonLitBertModel(nn.Module):
         return output
 
 
+class CommonLitRoBERTaModel(nn.Module):
+    def __init__(self):
+        super(CommonLitRoBERTaModel, self).__init__()
+        self.roberta = RobertaModel.from_pretrained("roberta-base")
+        self.fc = nn.Linear(768, 1)
+
+    def forward(self, batch):
+        ids, mask = (
+            batch["input_ids"],
+            batch["attention_mask"],
+        )
+        _, output = self.roberta(
+            ids,
+            attention_mask=mask,
+            return_dict=False,
+        )
+        output = self.fc(output)
+        return output
+
+
 class CommonLitModel(pl.LightningModule):
-    def __init__(self, base_model, lr=1e-4):
+    def __init__(self, base_model, num_epoch, train_dataloader_len, lr=1e-4):
         super(CommonLitModel, self).__init__()
         self.lr = lr
+        self.num_epoch = num_epoch
+        self.train_dataloader_len = train_dataloader_len
+
         self.model = base_model
         self.loss_fn = RMSELoss()  # nn.MSELoss()
 
@@ -60,25 +84,19 @@ class CommonLitModel(pl.LightningModule):
         return z
 
     def configure_optimizers(self):
-        def lr_warmup(epoch):
-            warm_up_step = 10
-            if epoch < warm_up_step:
-                # warm up lr
-                lr_scale = 0.1 ** (warm_up_step - epoch)
-            else:
-                lr_scale = 0.95 ** epoch
-
-            return lr_scale
-
         optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.lr,
             betas=(0.9, 0.999),
             eps=1e-08,
-            weight_decay=1e-2,
+            weight_decay=5e-2,
         )
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_warmup)
-        return [optimizer], [scheduler]
+        lr_scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=2,
+            num_training_steps=self.train_dataloader_len * self.num_epoch,
+        )
+        return [optimizer], [lr_scheduler]
 
     def configure_callbacks(self):
         lr_monitor = LearningRateMonitor(logging_interval="step")
@@ -87,14 +105,14 @@ class CommonLitModel(pl.LightningModule):
             patience=20,
             verbose=False,
             monitor="val_loss",
-            min_delta=0,
+            min_delta=0.0,
         )
         checkpoint = ModelCheckpoint(
             filename="{epoch:02d}-{loss:.4f}-{val_loss:.4f}",
             monitor="val_loss",
             mode="min",
         )
-        return [lr_monitor, early_stop, checkpoint]
+        return [checkpoint, lr_monitor, early_stop]
 
     def shared_step(self, batch):
         z = self(batch)
@@ -103,12 +121,21 @@ class CommonLitModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
+        self.log("train_loss", loss)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
+        self.log("val_loss", loss, prog_bar=True)
         return {"val_loss": loss}
 
     def test_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         return {"test_loss": loss}
+
+    def test_step_end(self, outputs):
+        return outputs
+
+    def test_epoch_end(self, outputs):
+        loss = torch.cat([out["test_loss"] for out in outputs], dim=0)
+        self.log("test_rmse", torch.mean(loss))

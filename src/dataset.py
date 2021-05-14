@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class CommonLitDataset(Dataset):
-    def __init__(self, data, tokenizer, max_len=100):
+    def __init__(self, data, tokenizer, max_len=200):
         self.target = data[["target"]].to_numpy()
         self.excerpt = data[["excerpt"]].to_numpy()
         self.tokenizer = tokenizer
@@ -29,14 +29,14 @@ class CommonLitDataset(Dataset):
 
         ids = inputs["input_ids"]
         mask = inputs["attention_mask"]
-        token_type_ids = inputs["token_type_ids"]
+        # token_type_ids = inputs["token_type_ids"]
 
         target = self.target[idx]
 
         return {
             "input_ids": torch.tensor(ids, dtype=torch.long),
             "attention_mask": torch.tensor(mask, dtype=torch.long),
-            "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
+            # "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
             "target": torch.tensor(target, dtype=torch.float32),
         }
 
@@ -68,8 +68,8 @@ class CommonLitDataModule(pl.LightningDataModule):
             dataset,
             batch_size=self.batch_size,
             num_workers=4,
-            shuffle=False,
-            drop_last=False,
+            shuffle=True,
+            drop_last=True,
         )
 
     def test_dataloader(self):

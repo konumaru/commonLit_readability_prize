@@ -48,11 +48,14 @@ delete-instance:
 connect-instance:
 	gcloud compute ssh $(INSTANCE_NAMES) --zone $(ZONE)
 
-jn:
-	poetry run jupyter lab
-
 test:
 	@make test-pytest
 
 test-pytest:
 	poetry run pytest -s --pdb tests/
+
+jn:
+	poetry run jupyter lab
+
+tb-server:
+	tensorboard --logdir ./tb_logs/

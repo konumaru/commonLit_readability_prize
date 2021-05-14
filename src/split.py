@@ -1,15 +1,16 @@
 import pathlib
 
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold
 
 
 def main():
     dump_dir = pathlib.Path("../data/split")
     data = pd.read_csv("../data/raw/train.csv")
-    target_bins = pd.cut(data["target"], bins=20, labels=False)
+    target_bins = pd.cut(data["target"], bins=10, labels=False)
 
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    # cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv = KFold(n_splits=5, shuffle=True, random_state=42)
     for n_fold, (train_idx, valid_idx) in enumerate(cv.split(data, target_bins)):
 
         train = data.loc[train_idx, ["excerpt", "target"]]
