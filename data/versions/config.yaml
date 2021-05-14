@@ -1,0 +1,15 @@
+preprocess:
+  target_size:
+  - 64
+  - 64
+  normalize: true
+model:
+  image_size:
+  - 64
+  - 64
+  drop_rate: 0.5
+train:
+  epochs: 5
+  batch_size: 32
+  learning_rate: 0.001
+logdir: outputs

@@ -2,6 +2,8 @@ import pytorch_lightning as pl
 import pytorch_warmup as warmup
 import torch
 import torch.nn as nn
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from transformers import (
     AdamW,
     AutoModelForSequenceClassification,
@@ -67,10 +69,20 @@ class CommonLitModel(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def configure_callbacks(self):
-        # early_stop = EarlyStopping(monitor="val_acc", mode="max")
-        # checkpoint = ModelCheckpoint(monitor="val_loss")
-        # return [early_stop, checkpoint]
-        pass
+        lr_monitor = LearningRateMonitor(logging_interval="step")
+        early_stop = EarlyStopping(
+            mode="min",
+            patience=20,
+            verbose=False,
+            monitor="val_loss",
+            min_delta=0,
+        )
+        checkpoint = ModelCheckpoint(
+            filename="{epoch:02d}-{loss:.4f}-{val_loss:.4f}",
+            monitor="val_loss",
+            mode="min",
+        )
+        return [lr_monitor, early_stop, checkpoint]
 
     def shared_step(self, batch):
         z = self(batch)
