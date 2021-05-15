@@ -70,13 +70,18 @@ class CommonLitRoBERTaModel(nn.Module):
 
 
 class CommonLitModel(pl.LightningModule):
-    def __init__(self, base_model, num_epoch, train_dataloader_len, lr=1e-4):
+    def __init__(
+        self,
+        num_epoch: int = 20,
+        train_dataloader_len: int = 20,
+        lr: float = 1e-4,
+    ):
         super(CommonLitModel, self).__init__()
         self.lr = lr
         self.num_epoch = num_epoch
         self.train_dataloader_len = train_dataloader_len
 
-        self.model = base_model
+        self.model = CommonLitRoBERTaModel()
         self.loss_fn = RMSELoss()  # nn.MSELoss()
 
     def forward(self, batch):

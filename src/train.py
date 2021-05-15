@@ -15,7 +15,7 @@ from model import CommonLitBertModel, CommonLitModel, CommonLitRoBERTaModel
 
 
 def main():
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
+    # tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
     tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
 
     for n_fold in range(5):

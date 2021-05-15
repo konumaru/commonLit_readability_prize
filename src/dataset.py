@@ -58,6 +58,7 @@ class CommonLitDataModule(pl.LightningDataModule):
             dataset,
             batch_size=self.batch_size,
             num_workers=4,
+            pin_memory=True,
             shuffle=True,
             drop_last=True,
         )
@@ -68,6 +69,7 @@ class CommonLitDataModule(pl.LightningDataModule):
             dataset,
             batch_size=self.batch_size,
             num_workers=4,
+            pin_memory=True,
             shuffle=True,
             drop_last=True,
         )
@@ -78,6 +80,7 @@ class CommonLitDataModule(pl.LightningDataModule):
             dataset,
             batch_size=self.batch_size,
             num_workers=4,
+            pin_memory=True,
             shuffle=False,
             drop_last=False,
         )
