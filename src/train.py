@@ -30,7 +30,6 @@ def main():
         )
 
         model = CommonLitModel(
-            base_model=CommonLitRoBERTaModel(),
             num_epoch=100,
             train_dataloader_len=train_dataloader_len,
         )

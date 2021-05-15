@@ -93,7 +93,7 @@ class CommonLitModel(pl.LightningModule):
             self.parameters(),
             lr=self.lr,
             betas=(0.9, 0.999),
-            eps=1e-08,
+            eps=1e-8,
             weight_decay=5e-2,
         )
         lr_scheduler = get_linear_schedule_with_warmup(
@@ -107,10 +107,10 @@ class CommonLitModel(pl.LightningModule):
         lr_monitor = LearningRateMonitor(logging_interval="step")
         early_stop = EarlyStopping(
             mode="min",
-            patience=20,
+            patience=5,
             verbose=False,
             monitor="val_loss",
-            min_delta=0.0,
+            min_delta=0.01,
         )
         checkpoint = ModelCheckpoint(
             filename="{epoch:02d}-{loss:.4f}-{val_loss:.4f}",
