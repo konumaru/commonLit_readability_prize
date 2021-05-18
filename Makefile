@@ -9,7 +9,7 @@ ADDRESS := $(ADDRESS)
 SSH_KEY_PATH := $(SSH_KEY_PATH)
 STARTUP_SCRIPT := $(abspath $(STARTUP_SCRIPT))
 ZONE := asia-east1-c
-MACHINE_TYPE := n1-highmem-8
+MACHINE_TYPE := n1-highmem-4
 GPU_TYPE := nvidia-tesla-v100
 
 
