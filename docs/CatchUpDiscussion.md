@@ -1,5 +1,10 @@
 # Catch Up Discussion
 
+## 2021-05-22
+
+- 学習済みモデルがたくさん参照されている notebook
+  - https://www.kaggle.com/leighplt/transformers-cv-train-inference-pytorch
+
 ## 2021-05-20
 
 - Google 翻訳で２重翻訳することで Data Augmentation をする
