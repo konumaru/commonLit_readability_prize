@@ -4,4 +4,6 @@
 
 ## Keywords
 
-- readbility
+- Readbility
+- Fine tuning
+- Sentence embedding

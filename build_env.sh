@@ -38,12 +38,13 @@ sudo apt install -y build-essential \
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
 echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
+echo 'eval "$(pyenv init --path)"' >> ~/.bashrc && source ~/.bashrc
 
 # Install poetry
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-echo 'source $HOME/.poetry/env' >> ~/.bashrc
-poetry config virtualenvs.in-project true
+echo 'source $HOME/.poetry/env' >> ~/.bashrc && source ~/.bashrc
 
-# Install Python
+# Install python
 pyenv install 3.8.7 && pyenv global 3.8.7
+# Setting poetry config
+poetry config virtualenvs.in-project true
