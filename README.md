@@ -5,5 +5,6 @@
 ## Keywords
 
 - Readbility
-- Fine tuning
-- Sentence embedding
+- Fine Tuning
+- Transfer Learning
+- Sentence Embedding
