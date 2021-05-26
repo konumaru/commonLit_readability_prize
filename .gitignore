@@ -132,3 +132,4 @@ dmypy.json
 *.pkl
 *.pickle
 tb_logs/
+notebook/ckpt/
