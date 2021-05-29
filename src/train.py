@@ -26,14 +26,15 @@ def calc_average_loss(ckeckpoints):
 
 
 def main():
-    DUBUG = 0
+    DEBUG = 0
+    NUM_FOLD = 15 if DEBUG == 0 else 1
 
     num_epoch = 20
     batch_size = 8
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
     best_checkpoints = []
-    for n_fold in range(15):
+    for n_fold in range(NUM_FOLD):
         datamodule = CommonLitDataModule(
             f"../data/split/fold_{n_fold}/", tokenizer, batch_size
         )
@@ -73,7 +74,7 @@ def main():
             callbacks=[lr_monitor, checkpoint],
             max_epochs=num_epoch,
             stochastic_weight_avg=True,
-            fast_dev_run=DUBUG,
+            fast_dev_run=DEBUG,
         )
         trainer.fit(model=model, datamodule=datamodule)
 

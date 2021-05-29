@@ -9,7 +9,9 @@ from sklearn.model_selection import (
     StratifiedKFold,
 )
 
-from utils.common import load_pickle
+from utils.common import load_pickle, seed_everything
+
+seed_everything()
 
 
 def main():

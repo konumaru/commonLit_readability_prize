@@ -5,6 +5,20 @@ import time
 from contextlib import contextmanager
 from typing import Any, List
 
+import numpy as np
+import pytorch_lightning as pl
+import torch
+
+
+def seed_everything(seed: int = 42):
+    np.random.seed(seed)
+    pl.seed_everything(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
 
 @contextmanager
 def timer(name):

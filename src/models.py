@@ -269,17 +269,34 @@ class CommonLitModel(pl.LightningModule):
 
     def shared_step(self, batch):
         z = self(batch)
-        loss = self.loss_fn(z, batch["target"])
-        metric = self.eval_fn(z, batch["target"])
-        return z, loss, metric
+        return z
 
     def training_step(self, batch, batch_idx):
-        z, loss, metric = self.shared_step(batch)
+        z = self.shared_step(batch)
+        loss = self.loss_fn(z, batch["target"])
         self.log("train_loss", loss)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
-        z, loss, metric = self.shared_step(batch)
+        z = self.shared_step(batch)
+        return {"pred": z, "target": batch["target"]}
+
+    def validation_step_end(self, batch_parts):
+        return batch_parts
+
+    def validation_epoch_end(self, validation_step_outputs):
+        pred = []
+        target = []
+
+        for output in validation_step_outputs:
+            pred.append(output["pred"])
+            target.append(output["target"])
+
+        pred = torch.cat(pred, dim=0)
+        target = torch.cat(target, dim=0)
+
+        loss = self.loss_fn(pred, target)
+        metric = self.eval_fn(pred, target)
+
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_metric", metric, prog_bar=True)
-        return {"val_loss": loss, "val_metric": metric}

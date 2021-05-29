@@ -10,8 +10,9 @@ from nltk import pos_tag
 from nltk.corpus import stopwords
 from pandarallel import pandarallel
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import StandardScaler
 
-from utils.common import save_cache, timer
+from utils.common import save_cache, seed_everything, timer
 
 nltk.download("punkt")
 nltk.download("wordnet")
@@ -20,6 +21,8 @@ nltk.download("stopwords")
 pandarallel.initialize(progress_bar=True)
 
 DST_DIR = "../data/features/"
+
+seed_everything()
 
 
 @save_cache(filepath=f"{DST_DIR}preprocessed_excerpt.pkl", use_cache=True)
@@ -37,7 +40,7 @@ def get_preprocessed_excerpt(src_data: pd.DataFrame) -> pd.DataFrame:
     return dst_data
 
 
-@save_cache(filepath=f"{DST_DIR}textstats.pkl", use_cache=True)
+@save_cache(filepath=f"{DST_DIR}textstats.pkl", use_cache=False)
 def get_textstat(src_data: pd.DataFrame) -> pd.DataFrame:
     dst_data = pd.DataFrame()
 
@@ -59,6 +62,10 @@ def get_textstat(src_data: pd.DataFrame) -> pd.DataFrame:
         coleman_liau_index=src_data["excerpt"].apply(textstat.coleman_liau_index),
         linsear_write_formula=src_data["excerpt"].apply(textstat.linsear_write_formula),
     )
+
+    scaler = StandardScaler()
+    feat_cols = dst_data.columns.tolist()
+    dst_data[feat_cols] = scaler.fit_transform(dst_data)
     return dst_data
 
 
