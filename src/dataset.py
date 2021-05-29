@@ -5,15 +5,30 @@ import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+import transformers
 from torch.utils.data import DataLoader, Dataset
+from transformers import AutoTokenizer
 
 
-class CommonLitDataset(Dataset):
-    def __init__(self, data, tokenizer, max_len=200):
-        self.target = data[["target"]].to_numpy()
-        self.excerpt = data[["excerpt"]].to_numpy()
-        self.tokenizer = tokenizer
+class CommonLitDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        tokenizer: transformers.PreTrainedTokenizer,
+        max_len: int = 256,
+        is_test: int = False,
+    ):
         self.max_len = max_len
+        self.tokenizer = tokenizer
+        self.excerpt = data[["excerpt"]].to_numpy()
+
+        if is_test:
+            self.target = np.zeros(len(data))
+            self.textstat = np.zeros(len(data))
+        else:
+            self.target = data["target"].to_numpy()
+            textstat = data.drop(["excerpt", "target"], axis=1)
+            self.textstat = textstat.to_numpy()
 
     def __len__(self):
         return len(self.excerpt)
@@ -23,20 +38,25 @@ class CommonLitDataset(Dataset):
         inputs = self.tokenizer(
             text,
             max_length=self.max_len,
-            padding="max_length",
             truncation=True,
+            padding="max_length",
+            return_attention_mask=True,
+            return_token_type_ids=True,
         )
-
-        ids = inputs["input_ids"]
-        mask = inputs["attention_mask"]
-        # token_type_ids = inputs["token_type_ids"]
-
+        textstat = self.textstat[idx]
         target = self.target[idx]
 
         return {
-            "input_ids": torch.tensor(ids, dtype=torch.long),
-            "attention_mask": torch.tensor(mask, dtype=torch.long),
-            # "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
+            "inputs": {
+                "input_ids": torch.tensor(inputs["input_ids"], dtype=torch.long),
+                "attention_mask": torch.tensor(
+                    inputs["attention_mask"], dtype=torch.long
+                ),
+                "token_type_ids": torch.tensor(
+                    inputs["token_type_ids"], dtype=torch.long
+                ),
+            },
+            "textstat": torch.tensor(textstat, dtype=torch.float32),
             "target": torch.tensor(target, dtype=torch.float32),
         }
 
@@ -47,6 +67,8 @@ class CommonLitDataModule(pl.LightningDataModule):
         self.data_dir = pathlib.Path(data_dir)
         self.tokenizer = tokenizer
         self.batch_size = batch_size
+
+        self.setup()
 
     def setup(self, stage: Optional[str] = None):
         self.train = pd.read_pickle(self.data_dir / "train.pkl")
@@ -74,13 +96,18 @@ class CommonLitDataModule(pl.LightningDataModule):
             drop_last=True,
         )
 
-    def test_dataloader(self):
-        dataset = CommonLitDataset(self.valid, self.tokenizer)
-        return DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            num_workers=4,
-            pin_memory=True,
-            shuffle=False,
-            drop_last=False,
-        )
+
+if __name__ == "__main__":
+    data = pd.read_pickle("../data/split/fold_0/train.pkl")
+
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    dataset = CommonLitDataset(data, tokenizer)
+
+    datamodule = CommonLitDataModule(
+        data_dir="../data/split/fold_0/",
+        tokenizer=tokenizer,
+        batch_size=4,
+    )
+
+    batch = iter(datamodule.train_dataloader()).next()
+    print(batch)
