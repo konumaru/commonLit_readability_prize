@@ -7,14 +7,14 @@ import pandas as pd
 import pytest
 import torch
 from torch.utils.data import DataLoader
-from transformers import BertModel, BertTokenizer
+from transformers import AutoTokenizer
 
 from src.dataset import CommonLitDataset
-from src.train import CommonLitBertModel
+from src.models import CommonLitRoBERTaModel, RMSELoss
 
 
 @pytest.fixture
-def sample_dataset():
+def sample_data():
     data = pd.DataFrame()
     data["excerpt"] = [
         "Hello world!",
@@ -23,25 +23,25 @@ def sample_dataset():
     ]
     data["target"] = np.random.rand(3, 1)
 
-    model_path = "bert-base-uncased"
-    model = BertModel.from_pretrained(model_path)
-    tokenizer = BertTokenizer.from_pretrained(model_path)
+    num_textstat_dim = 10
+    for i in range(num_textstat_dim):
+        data[f"textstats_{i}"] = np.random.rand(3, 1)
 
-    dataset = CommonLitDataset(data, tokenizer=tokenizer, max_len=100)
-    return dataset
+    return data
 
 
-def test_bert_model(sample_dataset):
-    batch_size = 1
-    dataloader = DataLoader(
-        sample_dataset,
-        batch_size=batch_size,
-        shuffle=True,
+def test_roberta_model(sample_data):
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    dataset = CommonLitDataset(sample_data, tokenizer)
+    batch = iter(DataLoader(dataset, batch_size=2)).next()
+
+    model = CommonLitRoBERTaModel(
+        model_name_or_path="roberta-base", output_hidden_states=False
     )
 
-    first_batch = iter(dataloader).next()
+    z = model(batch)
+    assert z.shape == batch["target"].shape
 
-    model = CommonLitBertModel()
-    z = model(first_batch)
-
-    assert first_batch["target"].shape == z.shape
+    loss_fn = RMSELoss()
+    loss = loss_fn(z, batch["target"])
+    loss.backward()

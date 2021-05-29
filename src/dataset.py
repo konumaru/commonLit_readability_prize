@@ -23,10 +23,10 @@ class CommonLitDataset(torch.utils.data.Dataset):
         self.excerpt = data[["excerpt"]].to_numpy()
 
         if is_test:
-            self.target = np.zeros(len(data))
-            self.textstat = np.zeros(len(data))
+            self.target = np.zeros((len(data), 1))
+            self.textstat = np.zeros((len(data), 1))
         else:
-            self.target = data["target"].to_numpy()
+            self.target = data[["target"]].to_numpy()
             textstat = data.drop(["excerpt", "target"], axis=1)
             self.textstat = textstat.to_numpy()
 

@@ -2,15 +2,11 @@ import pytorch_lightning as pl
 import pytorch_warmup as warmup
 import torch
 import torch.nn as nn
-from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from transformers import (
     AdamW,
-    AutoModelForSequenceClassification,
+    AutoConfig,
+    AutoModel,
     AutoTokenizer,
-    BertConfig,
-    BertModel,
-    RobertaModel,
     get_cosine_schedule_with_warmup,
     get_linear_schedule_with_warmup,
 )
@@ -30,7 +26,7 @@ class RMSELoss(nn.Module):
 class CommonLitBertModel(nn.Module):
     def __init__(self):
         super(CommonLitBertModel, self).__init__()
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        self.bert = AutoModel.from_pretrained("bert-base-uncased")
         self.fc = nn.Linear(768, 1)
 
     def forward(self, batch):
@@ -50,23 +46,49 @@ class CommonLitBertModel(nn.Module):
 
 
 class CommonLitRoBERTaModel(nn.Module):
-    def __init__(self):
+    def __init__(
+        self,
+        model_name_or_path: str = "roberta-base",
+        output_hidden_states: bool = False,
+    ):
         super(CommonLitRoBERTaModel, self).__init__()
-        self.roberta = RobertaModel.from_pretrained("roberta-base")
-        self.fc = nn.Linear(768, 1)
+        self.roberta = AutoModel.from_pretrained(
+            model_name_or_path,
+            output_hidden_states=output_hidden_states,
+        )
+        self.config = self.roberta.config
+        self.regression_head = nn.Sequential(
+            nn.LayerNorm(768),
+            nn.Dropout(0.5),
+            nn.Linear(768, 1),
+        )
+        # Initialize Weights
+        self.regression_head.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
 
     def forward(self, batch):
-        ids, mask = (
-            batch["input_ids"],
-            batch["attention_mask"],
+        outputs = self.roberta(**batch["inputs"])
+        pooler_output = outputs.pooler_output
+        hidden_state_avg = (
+            outputs.last_hidden_state[:, -4:].mean(dim=(1, 2)).view(-1, 1)
         )
-        _, output = self.roberta(
-            ids,
-            attention_mask=mask,
-            return_dict=False,
-        )
-        output = self.fc(output)
-        return output
+        hidden_state_sum = outputs.last_hidden_state[:, -4:].sum(dim=(1, 2)).view(-1, 1)
+
+        # x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
+        x = self.regression_head(pooler_output)
+        return x
 
 
 class CommonLitModel(pl.LightningModule):
@@ -102,22 +124,6 @@ class CommonLitModel(pl.LightningModule):
             num_training_steps=self.train_dataloader_len * self.num_epoch,
         )
         return [optimizer], [lr_scheduler]
-
-    def configure_callbacks(self):
-        lr_monitor = LearningRateMonitor(logging_interval="step")
-        early_stop = EarlyStopping(
-            mode="min",
-            patience=5,
-            verbose=False,
-            monitor="val_loss",
-            min_delta=0.01,
-        )
-        checkpoint = ModelCheckpoint(
-            filename="{epoch:02d}-{loss:.4f}-{val_loss:.4f}",
-            monitor="val_loss",
-            mode="min",
-        )
-        return [checkpoint, lr_monitor, early_stop]
 
     def shared_step(self, batch):
         z = self(batch)
