@@ -9,8 +9,8 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
-from src.dataset import CommonLitDataset
-from src.models import CommonLitRoBERTaModel, RMSELoss
+from src.dataset import CommonLitDataModule, CommonLitDataset
+from src.models import CommonLitModel, CommonLitRoBERTaModel, RMSELoss
 
 
 @pytest.fixture
@@ -38,6 +38,21 @@ def test_roberta_model(sample_data):
     model = CommonLitRoBERTaModel(
         model_name_or_path="roberta-base", output_hidden_states=False
     )
+
+    z = model(batch)
+    assert z.shape == batch["target"].shape
+
+    loss_fn = RMSELoss()
+    loss = loss_fn(z, batch["target"])
+    loss.backward()
+
+
+def test_pl_model(sample_data):
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    dataset = CommonLitDataset(sample_data, tokenizer)
+    batch = iter(DataLoader(dataset, batch_size=2)).next()
+
+    model = CommonLitModel()
 
     z = model(batch)
     assert z.shape == batch["target"].shape

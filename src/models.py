@@ -94,59 +94,189 @@ class CommonLitRoBERTaModel(nn.Module):
 class CommonLitModel(pl.LightningModule):
     def __init__(
         self,
-        num_epoch: int = 20,
-        train_dataloader_len: int = 20,
-        lr: float = 1e-4,
+        lr: float = 5e-5,
+        num_epoch: int = 10,
+        roberta_model_name_or_path: str = "roberta-base",
+        output_hidden_states: bool = False,
+        lr_scheduler: str = "linear",
+        lr_interval: str = "epoch",
+        lr_warmup_step: int = 0,
     ):
         super(CommonLitModel, self).__init__()
-        self.lr = lr
-        self.num_epoch = num_epoch
-        self.train_dataloader_len = train_dataloader_len
+        self.save_hyperparameters()
 
-        self.model = CommonLitRoBERTaModel()
-        self.loss_fn = RMSELoss()  # nn.MSELoss()
+        self.roberta_model = CommonLitRoBERTaModel(
+            model_name_or_path=roberta_model_name_or_path,
+            output_hidden_states=output_hidden_states,
+        )
+        self.loss_fn = nn.MSELoss()
+        self.eval_fn = RMSELoss()
 
     def forward(self, batch):
-        z = self.model(batch)
+        z = self.roberta_model(batch)
         return z
 
     def configure_optimizers(self):
+        optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
         optimizer = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.lr,
+            optimizer_grouped_parameters,  # self.parameters()
+            lr=self.hparams.lr,
             betas=(0.9, 0.999),
             eps=1e-8,
-            weight_decay=5e-2,
+            weight_decay=1e-2,
         )
-        lr_scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=2,
-            num_training_steps=self.train_dataloader_len * self.num_epoch,
-        )
-        return [optimizer], [lr_scheduler]
+
+        if self.hparams.lr_scheduler == "linear":
+            # Linear scheduler
+            lr_scheduler = get_linear_schedule_with_warmup(
+                optimizer,
+                num_warmup_steps=0,
+                num_training_steps=self.hparams.num_epoch,
+            )
+        elif self.hparams.lr_scheduler == "cosine":
+            # Cosine scheduler
+            lr_scheduler = get_cosine_schedule_with_warmup(
+                optimizer,
+                num_warmup_steps=self.hparams.lr_warmup_step,
+                num_training_steps=self.hparams.num_epoch,
+            )
+        else:
+            # Linear scheduler
+            lr_scheduler = get_linear_schedule_with_warmup(
+                optimizer,
+                num_warmup_steps=self.hparams.lr_warmup_step,
+                num_training_steps=self.hparams.num_epoch * self.train_dataloader_len,
+            )
+
+        lr_dict = {
+            "scheduler": lr_scheduler,
+            "interval": self.hparams.lr_interval,  # step or epoch
+            "strict": True,
+        }
+
+        return {"optimizer": optimizer, "lr_scheduler": lr_dict}
+
+    def _get_optimizer_params(self, model):
+        # differential learning rate and weight decay
+        param_optimizer = list(model.named_parameters())
+        learning_rate = self.hparams.lr
+        no_decay = ["bias", "gamma", "beta"]
+        group1 = ["layer.0.", "layer.1.", "layer.2.", "layer.3."]
+        group2 = ["layer.4.", "layer.5.", "layer.6.", "layer.7."]
+        group3 = ["layer.8.", "layer.9.", "layer.10.", "layer.11."]
+        group_all = [
+            "layer.0.",
+            "layer.1.",
+            "layer.2.",
+            "layer.3.",
+            "layer.4.",
+            "layer.5.",
+            "layer.6.",
+            "layer.7.",
+            "layer.8.",
+            "layer.9.",
+            "layer.10.",
+            "layer.11.",
+        ]
+        optimizer_parameters = [
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                    and not any(nd in n for nd in group_all)
+                ],
+                "weight_decay_rate": 0.01,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                    and any(nd in n for nd in group1)
+                ],
+                "weight_decay_rate": 0.01,
+                "lr": learning_rate / 2.6,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                    and any(nd in n for nd in group2)
+                ],
+                "weight_decay_rate": 0.01,
+                "lr": learning_rate,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                    and any(nd in n for nd in group3)
+                ],
+                "weight_decay_rate": 0.01,
+                "lr": learning_rate * 2.6,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if any(nd in n for nd in no_decay)
+                    and not any(nd in n for nd in group_all)
+                ],
+                "weight_decay_rate": 0.0,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if any(nd in n for nd in no_decay) and any(nd in n for nd in group1)
+                ],
+                "weight_decay_rate": 0.0,
+                "lr": learning_rate / 2.6,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if any(nd in n for nd in no_decay) and any(nd in n for nd in group2)
+                ],
+                "weight_decay_rate": 0.0,
+                "lr": learning_rate,
+            },
+            {
+                "params": [
+                    p
+                    for n, p in model.roberta.named_parameters()
+                    if any(nd in n for nd in no_decay) and any(nd in n for nd in group3)
+                ],
+                "weight_decay_rate": 0.0,
+                "lr": learning_rate * 2.6,
+            },
+            {
+                "params": [
+                    p for n, p in model.named_parameters() if "roberta" not in n
+                ],
+                "lr": 1e-5,
+                "momentum": 0.99,
+            },
+        ]
+        return optimizer_parameters
 
     def shared_step(self, batch):
         z = self(batch)
         loss = self.loss_fn(z, batch["target"])
-        return loss
+        metric = self.eval_fn(z, batch["target"])
+        return z, loss, metric
 
     def training_step(self, batch, batch_idx):
-        loss = self.shared_step(batch)
+        z, loss, metric = self.shared_step(batch)
         self.log("train_loss", loss)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
-        loss = self.shared_step(batch)
+        z, loss, metric = self.shared_step(batch)
         self.log("val_loss", loss, prog_bar=True)
-        return {"val_loss": loss}
-
-    def test_step(self, batch, batch_idx):
-        loss = self.shared_step(batch)
-        return {"test_loss": loss}
-
-    def test_step_end(self, outputs):
-        return outputs
-
-    def test_epoch_end(self, outputs):
-        loss = torch.cat([out["test_loss"] for out in outputs], dim=0)
-        self.log("test_rmse", torch.mean(loss))
+        self.log("val_metric", metric, prog_bar=True)
+        return {"val_loss": loss, "val_metric": metric}
