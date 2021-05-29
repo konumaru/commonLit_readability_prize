@@ -57,10 +57,12 @@ class CommonLitRoBERTaModel(nn.Module):
             output_hidden_states=output_hidden_states,
         )
         self.config = self.roberta.config
+
+        reg_input_dim = 768 + 10
         self.regression_head = nn.Sequential(
-            nn.LayerNorm(768),
+            nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
-            nn.Linear(768, 1),
+            nn.Linear(reg_input_dim, 1),
         )
         # Initialize Weights
         self.regression_head.apply(self._init_weights)
@@ -87,7 +89,8 @@ class CommonLitRoBERTaModel(nn.Module):
         hidden_state_sum = outputs.last_hidden_state[:, -4:].sum(dim=(1, 2)).view(-1, 1)
 
         # x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
-        x = self.regression_head(pooler_output)
+        x = torch.cat((pooler_output, batch["textstat"]), dim=1)
+        x = self.regression_head(x)
         return x
 
 
