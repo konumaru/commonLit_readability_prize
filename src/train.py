@@ -6,42 +6,86 @@ import torch
 import torch.nn as nn
 import transformers
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
-from transformers import BertTokenizer, RobertaTokenizer
+from transformers import AutoTokenizer
 
 from dataset import CommonLitDataModule
-from model import CommonLitBertModel, CommonLitModel, CommonLitRoBERTaModel
+from models import CommonLitModel
+
+
+def calc_average_loss(ckeckpoints):
+    metrics = []
+    for ckpt in ckeckpoints:
+        metric = float(re.findall(r"val_metric=(\d+\.\d+)", ckpt)[0])
+        metrics.append(metric)
+
+    return metrics
 
 
 def main():
-    # tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
-    tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+    DUBUG = 0
 
-    for n_fold in range(5):
-        datamodule = CommonLitDataModule(f"../data/split/fold_{n_fold}/", tokenizer, 32)
-        datamodule.setup()
+    num_epoch = 20
+    batch_size = 8
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
-        train_dataloader_len = len(datamodule.train_dataloader())
+    best_checkpoints = []
+    for n_fold in range(15):
+        datamodule = CommonLitDataModule(
+            f"../data/split/fold_{n_fold}/", tokenizer, batch_size
+        )
 
+        # Logger
         tb_logger = TensorBoardLogger(
             save_dir="../tb_logs",
-            name="Baseline",
+            name="RoBERTa-Baseline",
+        )
+        # Callbacks
+        lr_monitor = LearningRateMonitor(logging_interval="step")
+        early_stop = EarlyStopping(
+            mode="min",
+            patience=5,
+            verbose=False,
+            monitor="val_loss",
+            min_delta=0.005,
+        )
+        checkpoint = ModelCheckpoint(
+            filename="{epoch:02d}-{loss:.4f}-{val_loss:.4f}-{val_metric:.4f}",
+            monitor="val_loss",
+            save_top_k=1,
+            mode="min",
         )
 
         model = CommonLitModel(
-            num_epoch=100,
-            train_dataloader_len=train_dataloader_len,
+            lr=5e-5,
+            num_epoch=num_epoch,
+            lr_scheduler="cosine",
+            lr_interval="epoch",
+            lr_warmup_step=0,
         )
         trainer = Trainer(
-            max_epochs=100,
-            gpus=1,
             accelerator="dp",
-            # fast_dev_run=1,
+            gpus=1,
             logger=tb_logger,
+            callbacks=[lr_monitor, checkpoint],
+            max_epochs=num_epoch,
+            stochastic_weight_avg=True,
+            fast_dev_run=DUBUG,
         )
         trainer.fit(model=model, datamodule=datamodule)
-        trainer.test(model=model, datamodule=datamodule)
+
+        print(f"{n_fold}-Fold Best Checkpoint:\n", checkpoint.best_model_path)
+        best_checkpoints.append(checkpoint.best_model_path)
+
+    print(best_checkpoints)
+
+    metrics = calc_average_loss(best_checkpoints)
+    metric_avg = np.mean(metrics)
+    metric_std = np.std(metrics)
+    print(f"Average Validation Loss: {metric_avg:.6f} ± {metric_std:.4f}")
 
 
 if __name__ == "__main__":
