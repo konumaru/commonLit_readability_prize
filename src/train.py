@@ -1,4 +1,5 @@
 import pathlib
+import re
 
 import numpy as np
 import pandas as pd
@@ -27,10 +28,12 @@ def calc_average_loss(ckeckpoints):
 
 def main():
     DEBUG = 0
-    NUM_FOLD = 15 if DEBUG == 0 else 1
+    NUM_FOLD = 5  # 15 if DEBUG == 0 else 1
 
-    num_epoch = 20
+    num_epoch = 10
     batch_size = 8
+    lr = 5e-5
+
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
     best_checkpoints = []
@@ -61,7 +64,7 @@ def main():
         )
 
         model = CommonLitModel(
-            lr=5e-5,
+            lr=lr,
             num_epoch=num_epoch,
             lr_scheduler="cosine",
             lr_interval="epoch",

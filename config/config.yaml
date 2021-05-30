@@ -1,0 +1,6 @@
+db:
+  driver: postgresql
+  pass: drowssap
+  timeout: 20
+  user: postgre_user
+time: ${hydra:job.num}

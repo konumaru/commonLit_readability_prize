@@ -58,7 +58,7 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = 768 + 10
+        reg_input_dim = 768  # + 10
         self.regression_head = nn.Sequential(
             nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
@@ -89,8 +89,8 @@ class CommonLitRoBERTaModel(nn.Module):
         hidden_state_sum = outputs.last_hidden_state[:, -4:].sum(dim=(1, 2)).view(-1, 1)
 
         # x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
-        x = torch.cat((pooler_output, batch["textstat"]), dim=1)
-        x = self.regression_head(x)
+        # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
+        x = self.regression_head(pooler_output)
         return x
 
 
@@ -104,6 +104,7 @@ class CommonLitModel(pl.LightningModule):
         lr_scheduler: str = "linear",
         lr_interval: str = "epoch",
         lr_warmup_step: int = 0,
+        lr_num_cycles: int = 0.5,
     ):
         super(CommonLitModel, self).__init__()
         self.save_hyperparameters()
@@ -120,13 +121,13 @@ class CommonLitModel(pl.LightningModule):
         return z
 
     def configure_optimizers(self):
-        optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
+        # optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
         optimizer = torch.optim.AdamW(
-            optimizer_grouped_parameters,  # self.parameters()
+            self.parameters(),  # optimizer_grouped_parameters
             lr=self.hparams.lr,
-            betas=(0.9, 0.999),
-            eps=1e-8,
-            weight_decay=1e-2,
+            betas=(0.9, 0.999),  # NOTE: exp (0.9, 0.98)
+            eps=1e-8,  # NOTE:exp 1e-6
+            weight_decay=0,
         )
 
         if self.hparams.lr_scheduler == "linear":
@@ -142,6 +143,7 @@ class CommonLitModel(pl.LightningModule):
                 optimizer,
                 num_warmup_steps=self.hparams.lr_warmup_step,
                 num_training_steps=self.hparams.num_epoch,
+                num_cycles=self.hparams.lr_num_cycles,
             )
         else:
             # Linear scheduler
@@ -261,7 +263,7 @@ class CommonLitModel(pl.LightningModule):
                 "params": [
                     p for n, p in model.named_parameters() if "roberta" not in n
                 ],
-                "lr": 1e-5,
+                "lr": 1e-3,  # learning_rate
                 "momentum": 0.99,
             },
         ]
