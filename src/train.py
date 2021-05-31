@@ -1,8 +1,10 @@
+import os
 import pathlib
 import re
 
 import numpy as np
 import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import transformers
@@ -30,8 +32,8 @@ def main():
     DEBUG = 0
     NUM_FOLD = 5  # 15 if DEBUG == 0 else 1
 
-    num_epoch = 10
-    batch_size = 8
+    num_epoch = 20
+    batch_size = 24
     lr = 5e-5
 
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
@@ -51,7 +53,7 @@ def main():
         lr_monitor = LearningRateMonitor(logging_interval="step")
         early_stop = EarlyStopping(
             mode="min",
-            patience=5,
+            patience=10,
             verbose=False,
             monitor="val_loss",
             min_delta=0.005,
@@ -77,6 +79,9 @@ def main():
             callbacks=[lr_monitor, checkpoint],
             max_epochs=num_epoch,
             stochastic_weight_avg=True,
+            val_check_interval=0.2,
+            limit_train_batches=0.9,
+            limit_val_batches=0.9,
             fast_dev_run=DEBUG,
         )
         trainer.fit(model=model, datamodule=datamodule)

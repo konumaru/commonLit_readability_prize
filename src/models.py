@@ -121,9 +121,9 @@ class CommonLitModel(pl.LightningModule):
         return z
 
     def configure_optimizers(self):
-        # optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
+        optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
         optimizer = torch.optim.AdamW(
-            self.parameters(),  # optimizer_grouped_parameters
+            optimizer_grouped_parameters,  # self.parameters()
             lr=self.hparams.lr,
             betas=(0.9, 0.999),  # NOTE: exp (0.9, 0.98)
             eps=1e-8,  # NOTE:exp 1e-6
@@ -150,7 +150,7 @@ class CommonLitModel(pl.LightningModule):
             lr_scheduler = get_linear_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=self.hparams.lr_warmup_step,
-                num_training_steps=self.hparams.num_epoch * self.train_dataloader_len,
+                num_training_steps=self.hparams.num_epoch,
             )
 
         lr_dict = {
@@ -162,7 +162,7 @@ class CommonLitModel(pl.LightningModule):
         return {"optimizer": optimizer, "lr_scheduler": lr_dict}
 
     def _get_optimizer_params(self, model):
-        # differential learning rate and weight decay
+        # Differential learning rate and weight decay
         param_optimizer = list(model.named_parameters())
         learning_rate = self.hparams.lr
         no_decay = ["bias", "gamma", "beta"]

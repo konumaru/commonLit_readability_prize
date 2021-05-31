@@ -75,6 +75,8 @@ class CommonLitDataModule(pl.LightningDataModule):
         self.valid = pd.read_pickle(self.data_dir / "valid.pkl")
 
     def train_dataloader(self):
+        sample_rate = 0.2
+
         dataset = CommonLitDataset(self.train, self.tokenizer)
         return DataLoader(
             dataset,
@@ -92,7 +94,7 @@ class CommonLitDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=4,
             pin_memory=True,
-            shuffle=False,
+            shuffle=True,
             drop_last=False,
         )
 
