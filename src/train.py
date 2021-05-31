@@ -33,7 +33,7 @@ def main():
     NUM_FOLD = 5  # 15 if DEBUG == 0 else 1
 
     num_epoch = 20
-    batch_size = 24
+    batch_size = 8
     lr = 5e-5
 
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")

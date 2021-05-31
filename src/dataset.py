@@ -94,7 +94,7 @@ class CommonLitDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=4,
             pin_memory=True,
-            shuffle=True,
+            shuffle=False,
             drop_last=False,
         )
 
