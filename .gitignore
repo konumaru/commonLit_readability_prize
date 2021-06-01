@@ -134,3 +134,4 @@ dmypy.json
 tb_logs/
 notebook/ckpt/
 data/extend/*/*.bin
+*.ckpt
