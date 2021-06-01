@@ -30,7 +30,7 @@ def calc_average_loss(ckeckpoints):
 
 def main():
     DEBUG = 0
-    NUM_FOLD = 5  # 15 if DEBUG == 0 else 1
+    NUM_FOLD = 15 if DEBUG == 0 else 1
 
     num_epoch = 20
     batch_size = 8
@@ -53,7 +53,7 @@ def main():
         lr_monitor = LearningRateMonitor(logging_interval="step")
         early_stop = EarlyStopping(
             mode="min",
-            patience=10,
+            patience=5,
             verbose=False,
             monitor="val_loss",
             min_delta=0.005,
