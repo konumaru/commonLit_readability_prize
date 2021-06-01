@@ -44,7 +44,7 @@ def main():
     NUM_FOLD = 15 if DEBUG == 0 else 1
 
     exp_name = "RoBERTa-Baseline"
-    num_epoch = 15
+    num_epoch = 20
     batch_size = 8
     lr = 5e-5
 
@@ -91,9 +91,9 @@ def main():
             callbacks=[lr_monitor, checkpoint],
             max_epochs=num_epoch,
             stochastic_weight_avg=True,
-            val_check_interval=0.2,
+            val_check_interval=0.1,
             limit_train_batches=0.9,
-            limit_val_batches=1.0,
+            limit_val_batches=0.9,
             fast_dev_run=DEBUG,
         )
         trainer.fit(model=model, datamodule=datamodule)

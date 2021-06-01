@@ -57,7 +57,7 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = 768  # + 10
+        reg_input_dim = 770  # + 10
         self.regression_head = nn.Sequential(
             nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
@@ -87,9 +87,9 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         hidden_state_sum = outputs.last_hidden_state[:, -4:].sum(dim=(1, 2)).view(-1, 1)
 
-        # x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
+        x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
         # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
-        x = self.regression_head(pooler_output)
+        x = self.regression_head(x)
         return x
 
 
