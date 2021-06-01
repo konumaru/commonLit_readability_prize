@@ -28,11 +28,23 @@ def calc_average_loss(ckeckpoints):
     return metrics
 
 
+def dump_best_checkpoints(best_checkpoints, exp_name, metric_avg, metric_std):
+    os.makedirs(f"../data/versions/{exp_name}", exist_ok=True)
+
+    with open(
+        f"../data/versions/{exp_name}/best_checkpoints_{metric_avg:.6f}±{metric_std:.4f}.txt",
+        "w",
+    ) as f:
+        txt = "\n".join(best_checkpoints)
+        f.write(txt)
+
+
 def main():
     DEBUG = 0
     NUM_FOLD = 15 if DEBUG == 0 else 1
 
-    num_epoch = 20
+    exp_name = "RoBERTa-Baseline"
+    num_epoch = 15
     batch_size = 8
     lr = 5e-5
 
@@ -47,7 +59,7 @@ def main():
         # Logger
         tb_logger = TensorBoardLogger(
             save_dir="../tb_logs",
-            name="RoBERTa-Baseline",
+            name=exp_name,
         )
         # Callbacks
         lr_monitor = LearningRateMonitor(logging_interval="step")
@@ -81,7 +93,7 @@ def main():
             stochastic_weight_avg=True,
             val_check_interval=0.2,
             limit_train_batches=0.9,
-            limit_val_batches=0.9,
+            limit_val_batches=1.0,
             fast_dev_run=DEBUG,
         )
         trainer.fit(model=model, datamodule=datamodule)
@@ -89,11 +101,13 @@ def main():
         print(f"{n_fold}-Fold Best Checkpoint:\n", checkpoint.best_model_path)
         best_checkpoints.append(checkpoint.best_model_path)
 
-    print(best_checkpoints)
-
     metrics = calc_average_loss(best_checkpoints)
     metric_avg = np.mean(metrics)
     metric_std = np.std(metrics)
+
+    dump_best_checkpoints(best_checkpoints, exp_name, metric_avg, metric_std)
+    print(best_checkpoints)
+
     print(f"Average Validation Loss: {metric_avg:.6f} ± {metric_std:.4f}")
 
 

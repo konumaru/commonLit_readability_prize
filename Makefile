@@ -4,6 +4,8 @@ ifneq (,$(wildcard ./.env))
 	export
 endif
 
+TODAY = ${shell date '+%Y_%m_%d_%H%M'}
+
 INSTANCE_NAMES := $(INSTANCE_NAMES)
 ADDRESS := $(ADDRESS)
 SSH_KEY_PATH := $(SSH_KEY_PATH)  # ssh_key_path is abspath.
@@ -59,3 +61,5 @@ jn:
 tb-server:
 	tensorboard --logdir ./tb_logs/
 
+upload-roberta-model:
+	kaggle datasets version -p data/kaggle_dataset/pretrained_roberta/ -m "$(TODAY)" -d
