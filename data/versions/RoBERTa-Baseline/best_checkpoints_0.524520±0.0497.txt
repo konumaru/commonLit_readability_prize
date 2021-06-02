@@ -1,0 +1,15 @@
+../tb_logs/RoBERTa-Baseline/version_0/checkpoints/epoch=02-loss=0.0000-val_loss=0.2683-val_metric=0.5179.ckpt
+../tb_logs/RoBERTa-Baseline/version_1/checkpoints/epoch=17-loss=0.0000-val_loss=0.2808-val_metric=0.5299.ckpt
+../tb_logs/RoBERTa-Baseline/version_2/checkpoints/epoch=02-loss=0.0000-val_loss=0.2652-val_metric=0.5150.ckpt
+../tb_logs/RoBERTa-Baseline/version_3/checkpoints/epoch=08-loss=0.0000-val_loss=0.2367-val_metric=0.4865.ckpt
+../tb_logs/RoBERTa-Baseline/version_4/checkpoints/epoch=03-loss=0.0000-val_loss=0.2784-val_metric=0.5276.ckpt
+../tb_logs/RoBERTa-Baseline/version_5/checkpoints/epoch=05-loss=0.0000-val_loss=0.2586-val_metric=0.5085.ckpt
+../tb_logs/RoBERTa-Baseline/version_6/checkpoints/epoch=04-loss=0.0000-val_loss=0.2281-val_metric=0.4776.ckpt
+../tb_logs/RoBERTa-Baseline/version_7/checkpoints/epoch=05-loss=0.0000-val_loss=0.2668-val_metric=0.5165.ckpt
+../tb_logs/RoBERTa-Baseline/version_8/checkpoints/epoch=07-loss=0.0000-val_loss=0.2512-val_metric=0.5012.ckpt
+../tb_logs/RoBERTa-Baseline/version_9/checkpoints/epoch=05-loss=0.0000-val_loss=0.2889-val_metric=0.5375.ckpt
+../tb_logs/RoBERTa-Baseline/version_10/checkpoints/epoch=06-loss=0.0000-val_loss=0.2508-val_metric=0.5008.ckpt
+../tb_logs/RoBERTa-Baseline/version_11/checkpoints/epoch=04-loss=0.0000-val_loss=0.2871-val_metric=0.5358.ckpt
+../tb_logs/RoBERTa-Baseline/version_12/checkpoints/epoch=02-loss=0.0000-val_loss=0.2620-val_metric=0.5118.ckpt
+../tb_logs/RoBERTa-Baseline/version_13/checkpoints/epoch=02-loss=0.0000-val_loss=0.4902-val_metric=0.7001.ckpt
+../tb_logs/RoBERTa-Baseline/version_14/checkpoints/epoch=05-loss=0.0000-val_loss=0.2511-val_metric=0.5011.ckpt

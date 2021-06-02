@@ -28,6 +28,7 @@ sentencepiece = "^0.1.95"
 torchinfo = "^1.4.4"
 hydra-core = "^1.0.6"
 kaggle = "^1.5.12"
+xgboost = "^1.4.2"
 
 
 [tool.poetry.dev-dependencies]

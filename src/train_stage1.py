@@ -80,7 +80,7 @@ def main():
         model = CommonLitModel(
             lr=lr,
             num_epoch=num_epoch,
-            lr_scheduler="cosine",
+            lr_scheduler="linear",
             lr_interval="epoch",
             lr_warmup_step=0,
         )

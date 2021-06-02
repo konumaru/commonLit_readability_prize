@@ -57,7 +57,7 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = 770  # + 10
+        reg_input_dim = 778
         self.regression_head = nn.Sequential(
             nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
@@ -82,13 +82,8 @@ class CommonLitRoBERTaModel(nn.Module):
     def forward(self, batch):
         outputs = self.roberta(**batch["inputs"])
         pooler_output = outputs.pooler_output
-        hidden_state_avg = (
-            outputs.last_hidden_state[:, -4:].mean(dim=(1, 2)).view(-1, 1)
-        )
-        hidden_state_sum = outputs.last_hidden_state[:, -4:].sum(dim=(1, 2)).view(-1, 1)
 
-        x = torch.cat((pooler_output, hidden_state_avg, hidden_state_sum), dim=1)
-        # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
+        x = torch.cat((pooler_output, batch["textstat"]), dim=1)
         x = self.regression_head(x)
         return x
 
@@ -124,8 +119,8 @@ class CommonLitModel(pl.LightningModule):
         optimizer = torch.optim.AdamW(
             optimizer_grouped_parameters,  # self.parameters()
             lr=self.hparams.lr,
-            betas=(0.9, 0.999),  # NOTE: exp (0.9, 0.98)
-            eps=1e-8,  # NOTE:exp 1e-6
+            betas=(0.9, 0.999),
+            eps=1e-8,
             weight_decay=0,
         )
 
