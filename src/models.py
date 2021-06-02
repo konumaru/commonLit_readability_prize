@@ -57,7 +57,7 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = 778
+        reg_input_dim = 768
         self.regression_head = nn.Sequential(
             nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
@@ -83,8 +83,9 @@ class CommonLitRoBERTaModel(nn.Module):
         outputs = self.roberta(**batch["inputs"])
         pooler_output = outputs.pooler_output
 
-        x = torch.cat((pooler_output, batch["textstat"]), dim=1)
-        x = self.regression_head(x)
+        # NOTE: この段階でtextstat特徴量を追加すると、fine-tuning時の学習率と相性が悪く過学習する可能性が高い、
+        # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
+        x = self.regression_head(pooler_output)
         return x
 
 
