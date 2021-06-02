@@ -40,6 +40,7 @@ from xgboost import XGBRegressor
 from dataset import CommonLitDataset
 from models import CommonLitModel, CommonLitRoBERTaModel, RMSELoss
 from utils.common import load_pickle
+from utils.train_function import train_cross_validate, train_svr, train_xbg
 
 
 def load_data() -> pd.DataFrame:
@@ -110,20 +111,6 @@ def get_ckpt_path(checkpoint_path: str) -> List:
     return checkpoints
 
 
-def rmse(y_true, y_pred):
-    return mean_squared_error(y_true, y_pred, squared=False)
-
-
-def custom_cv(n_splits: int, target: pd.Series, shuffle: bool = True):
-    target = target.to_frame()
-    num_bins = int(np.floor(1 + np.log2(len(target))))
-    target.loc[:, "bins"] = pd.cut(target["target"], bins=num_bins, labels=False)
-
-    kf = model_selection.StratifiedKFold(n_splits=n_splits)
-    for train_idx, test_idx in kf.split(X=target, y=target["bins"]):
-        yield train_idx, test_idx
-
-
 def main():
     # Predict by RoBERTa
     ckpt_path = "../data/models/roberta/best_checkpoints.txt"
@@ -138,28 +125,10 @@ def main():
     X = train[[f"pred_{i}" for i in range(len(checkpoints))]].copy()
     y = train["target"]
 
-    print(X.head())
-
-    model = make_pipeline(
-        StandardScaler(),
-        SVR(kernel="rbf", C=10.0, epsilon=0.1),
-    )
-
-    result = cross_validate(
-        model,
-        X,
-        y,
-        cv=custom_cv(5, y),
-        scoring={"rmse": make_scorer(rmse)},
-        return_train_score=True,
-        return_estimator=True,
-        n_jobs=-1,
-    )
-
-    print(f"fit_time   : {result['fit_time'].mean():.5f}")
-    print(f"score_time : {result['score_time'].mean():.5f}")
-    print(f"train_rmse : {result['train_rmse'].mean():.5f}")
-    print(f"test_rmse  : {result['test_rmse'].mean():.5f}")
+    cv = model_selection.StratifiedKFold(n_splits=5)
+    num_bins = int(np.floor(1 + np.log2(len(y))))
+    y_cv = pd.cut(y, bins=num_bins, labels=False)
+    train_cross_validate(X, y, cv, train_svr, save_dir="../data/models/svr/", y_cv=y_cv)
 
 
 if __name__ == "__main__":

@@ -4,17 +4,17 @@ from typing import Callable, NoReturn
 
 import numpy as np
 import xgboost as xgb
+from sklearn import model_selection
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import KFold, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
 
 def train_xbg(X, y):
-    X_train, X_valid, y_train, y_valid = train_test_split(
+    X_train, X_valid, y_train, y_valid = model_selection.train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
@@ -58,17 +58,38 @@ def train_ridge(X, y):
 def train_cross_validate(
     X: np.ndarray,
     y: np.ndarray,
+    cv,
     train_fn: Callable,
     save_dir: str = "../data/models/tmp/",
-    n_splits: int = 5,
+    y_cv: np.ndarray = None,
     verbose: bool = True,
 ) -> NoReturn:
+    """Cross validation function.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Feature data.
+    y : np.ndarray
+        Target or label data.
+    train_fn : Callable
+        train function.
+    save_dir : str, optional
+        Save directory of trained model, by default "../data/models/tmp/"
+    n_splits : int, optional
+        split number, by default 5
+    verbose : bool, optional
+        Is print RMSE score, by default True
+
+    Returns
+    -------
+    NoReturn
+    """
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
     metrics = []
-    cv = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-    for n_fold, (train_idx, test_idx) in enumerate(cv.split(X, y)):
+    for n_fold, (train_idx, test_idx) in enumerate(cv.split(X, y_cv)):
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
 
@@ -90,15 +111,18 @@ def main():
 
     data = iris.data
     target = iris.target
+    cv = model_selection.KFold(n_splits=5)
 
     print("train Xgboost:")
-    train_cross_validate(data, target, train_xbg, save_dir="../data/models/xgb/")
+    train_cross_validate(data, target, cv, train_xbg, save_dir="../data/models/xgb/")
 
     print("\ntrain SVR")
-    train_cross_validate(data, target, train_svr, save_dir="../data/models/svr/")
+    train_cross_validate(data, target, cv, train_svr, save_dir="../data/models/svr/")
 
     print("\nTrain Ridge")
-    train_cross_validate(data, target, train_ridge, save_dir="../data/models/ridge/")
+    train_cross_validate(
+        data, target, cv, train_ridge, save_dir="../data/models/ridge/"
+    )
 
 
 if __name__ == "__main__":
