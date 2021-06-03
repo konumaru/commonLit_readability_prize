@@ -31,6 +31,9 @@ def calc_average_loss(ckeckpoints):
 def dump_best_checkpoints(best_checkpoints, exp_name, metric_avg, metric_std):
     os.makedirs(f"../data/versions/{exp_name}", exist_ok=True)
 
+    for ckpt in best_checkpoints:
+        ckpt.replace("=", "--")
+
     with open(
         f"../data/versions/{exp_name}/best_checkpoints_{metric_avg:.6f}±{metric_std:.4f}.txt",
         "w",

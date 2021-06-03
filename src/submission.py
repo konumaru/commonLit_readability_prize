@@ -1,13 +1,3 @@
-"""
-NOTE:
-
-- ここでは src 内の module を import した実行を許す
-- 最終の実装は notebook 形式で行う
-- notebook, dataset を kaggle api を使って upload する
-- そのあと、kaggle code 上で実行し、submission
-
-kaggle api は makefile に実装できると良さそう
-"""
 import os
 import pickle
 import re
