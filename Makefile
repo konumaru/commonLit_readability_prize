@@ -62,4 +62,4 @@ tb-server:
 	tensorboard --logdir ./tb_logs/
 
 upload-roberta-model:
-	kaggle datasets version -p data/kaggle_dataset/pretrained_roberta/ -m "$(TODAY)" -d
+	kaggle datasets version -p data/models/roberta/ -r zip --dir-mode zip -d -m "$(TODAY)"

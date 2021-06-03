@@ -125,19 +125,20 @@ class CommonLitModel(pl.LightningModule):
             weight_decay=0,
         )
 
+        total_steps = self.train_dataloader_len * self.hparams.num_epoch
         if self.hparams.lr_scheduler == "linear":
             # Linear scheduler
             lr_scheduler = get_linear_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=0,
-                num_training_steps=self.hparams.num_epoch,
+                num_training_steps=total_steps,
             )
         elif self.hparams.lr_scheduler == "cosine":
             # Cosine scheduler
             lr_scheduler = get_cosine_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=self.hparams.lr_warmup_step,
-                num_training_steps=self.hparams.num_epoch,
+                num_training_steps=total_steps,
                 num_cycles=self.hparams.lr_num_cycles,
             )
         else:
@@ -145,7 +146,7 @@ class CommonLitModel(pl.LightningModule):
             lr_scheduler = get_linear_schedule_with_warmup(
                 optimizer,
                 num_warmup_steps=self.hparams.lr_warmup_step,
-                num_training_steps=self.hparams.num_epoch,
+                num_training_steps=total_steps,
             )
 
         lr_dict = {

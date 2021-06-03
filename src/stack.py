@@ -5,37 +5,11 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import transformers
-import xgboost
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn import model_selection
-from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.metrics import make_scorer, mean_squared_error
-from sklearn.model_selection import (
-    KFold,
-    StratifiedKFold,
-    cross_val_score,
-    cross_validate,
-)
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR
-from torch.utils.data import DataLoader, Dataset
-from transformers import (
-    AdamW,
-    AutoConfig,
-    AutoModel,
-    AutoTokenizer,
-    get_cosine_schedule_with_warmup,
-    get_linear_schedule_with_warmup,
-)
-from xgboost import XGBRegressor
+from torch.utils.data import DataLoader
+from transformers import AutoTokenizer
 
 from dataset import CommonLitDataset
 from models import CommonLitModel, CommonLitRoBERTaModel, RMSELoss
@@ -47,7 +21,7 @@ def load_data() -> pd.DataFrame:
     dump_dir = pathlib.Path("../data/split")
     data = pd.read_csv("../data/raw/train.csv")
 
-    textstat = load_pickle("../data/features/textstats.pkl")
+    textstat = load_pickle("../data/features/textstats.pkl", verbose=False)
 
     data = pd.concat([data, textstat], axis=1)
     data.drop(["id", "url_legal", "license", "standard_error"], axis=1, inplace=True)
@@ -68,8 +42,9 @@ def get_dataloader():
     )
 
 
-def predict_by_ckpt(checkpoints, dataloader):
+def predict_by_ckpt(checkpoints):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataloader = get_dataloader()
 
     pred = []
     for _, ckpt in enumerate(checkpoints):
@@ -113,17 +88,16 @@ def get_ckpt_path(checkpoint_path: str) -> List:
 
 def main():
     # Predict by RoBERTa
-    ckpt_path = "../data/models/roberta/best_checkpoints.txt"
+    ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
     checkpoints = get_ckpt_path(ckpt_path)
-    dataloader = get_dataloader()
 
-    pred = predict_by_ckpt(checkpoints, dataloader)
+    pred = predict_by_ckpt(checkpoints)
 
     train = pd.read_csv("../data/raw/train.csv")[["id", "target"]]
     train[[f"pred_{i}" for i in range(len(checkpoints))]] = pred
 
-    X = train[[f"pred_{i}" for i in range(len(checkpoints))]].copy()
-    y = train["target"]
+    X = train[[f"pred_{i}" for i in range(len(checkpoints))]].copy().to_numpy()
+    y = train["target"].to_numpy()
 
     cv = model_selection.StratifiedKFold(n_splits=5)
     num_bins = int(np.floor(1 + np.log2(len(y))))
