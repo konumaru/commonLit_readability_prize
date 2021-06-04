@@ -88,8 +88,7 @@ def get_ckpt_path(checkpoint_path: str) -> List:
 
 def main():
     # Predict by RoBERTa
-    # ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
-    ckpt_path = "../data/models/roberta/best_checkpoints_0.501000±0.0255.txt"
+    ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
     checkpoints = get_ckpt_path(ckpt_path)
 
     pred = predict_by_ckpt(checkpoints)
@@ -100,7 +99,9 @@ def main():
     X = train[[f"pred_{i}" for i in range(len(checkpoints))]].copy().to_numpy()
     y = train["target"].to_numpy()
 
-    cv = model_selection.StratifiedKFold(n_splits=5)
+    cv = model_selection.RepeatedStratifiedKFold(
+        n_splits=5, n_repeats=3, random_state=42
+    )
     num_bins = int(np.floor(1 + np.log2(len(y))))
     y_cv = pd.cut(y, bins=num_bins, labels=False)
     train_cross_validate(X, y, cv, train_svr, save_dir="../data/models/svr/", y_cv=y_cv)
