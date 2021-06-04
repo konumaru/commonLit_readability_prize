@@ -100,9 +100,11 @@ class CommonLitModel(pl.LightningModule):
         lr_interval: str = "epoch",
         lr_warmup_step: int = 0,
         lr_num_cycles: int = 0.5,
+        train_dataloader_len: int = None,
     ):
         super(CommonLitModel, self).__init__()
         self.save_hyperparameters()
+        self.train_dataloader_len = train_dataloader_len
 
         self.roberta_model = CommonLitRoBERTaModel(
             model_name_or_path=roberta_model_name_or_path,

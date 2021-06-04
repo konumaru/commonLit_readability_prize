@@ -139,7 +139,8 @@ def main():
     test = pd.concat([test, textstat_feat], axis=1)
 
     # Predict by RoBERTa
-    ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
+    # ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
+    ckpt_path = "../data/models/roberta/best_checkpoints_0.501000±0.0255.txt"
     checkpoints = get_ckpt_path(ckpt_path)
 
     pred = predict_by_ckpt(test, checkpoints)

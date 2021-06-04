@@ -67,6 +67,7 @@ class CommonLitDataModule(pl.LightningDataModule):
         self.data_dir = pathlib.Path(data_dir)
         self.tokenizer = tokenizer
         self.batch_size = batch_size
+        self.train_dataloader_len = 0
 
         self.setup()
 
@@ -78,7 +79,7 @@ class CommonLitDataModule(pl.LightningDataModule):
         sample_rate = 0.2
 
         dataset = CommonLitDataset(self.train, self.tokenizer)
-        return DataLoader(
+        dataloader = DataLoader(
             dataset,
             batch_size=self.batch_size,
             num_workers=4,
@@ -86,6 +87,8 @@ class CommonLitDataModule(pl.LightningDataModule):
             shuffle=True,
             drop_last=True,
         )
+        self.train_dataloader_len = len(dataloader)
+        return dataloader
 
     def val_dataloader(self):
         dataset = CommonLitDataset(self.valid, self.tokenizer)

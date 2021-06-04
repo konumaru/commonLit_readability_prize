@@ -88,7 +88,8 @@ def get_ckpt_path(checkpoint_path: str) -> List:
 
 def main():
     # Predict by RoBERTa
-    ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
+    # ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
+    ckpt_path = "../data/models/roberta/best_checkpoints_0.501000±0.0255.txt"
     checkpoints = get_ckpt_path(ckpt_path)
 
     pred = predict_by_ckpt(checkpoints)
@@ -103,6 +104,7 @@ def main():
     num_bins = int(np.floor(1 + np.log2(len(y))))
     y_cv = pd.cut(y, bins=num_bins, labels=False)
     train_cross_validate(X, y, cv, train_svr, save_dir="../data/models/svr/", y_cv=y_cv)
+    train_cross_validate(X, y, cv, train_xbg, save_dir="../data/models/xgb/", y_cv=y_cv)
 
 
 if __name__ == "__main__":
