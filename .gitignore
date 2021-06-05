@@ -135,4 +135,5 @@ tb_logs/
 notebook/ckpt/
 data/extend/*
 *.ckpt
+*.pth
 data/models/roberta/*

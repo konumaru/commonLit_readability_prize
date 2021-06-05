@@ -44,14 +44,15 @@ def dump_best_checkpoints(best_checkpoints, exp_name, metric_avg, metric_std):
 
 def main():
     DEBUG = 0
-    NUM_FOLD = 5  # 15 if DEBUG == 0 else 1
+    NUM_FOLD = 15 if DEBUG == 0 else 1
 
     exp_name = "RoBERTa-Baseline"
     num_epoch = 20
     batch_size = 8
     lr = 5e-5
+    model_name = "roberta-base"
 
-    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     best_checkpoints = []
     for n_fold in range(NUM_FOLD):
@@ -86,7 +87,7 @@ def main():
             lr_scheduler="linear",
             lr_interval="epoch",
             lr_warmup_step=0,
-            roberta_model_name_or_path="../data/extend/roberta-base/roberta-base/",
+            roberta_model_name_or_path=model_name,
             train_dataloader_len=len(datamodule.train_dataloader()),
         )
         trainer = Trainer(
@@ -105,6 +106,14 @@ def main():
 
         print(f"{n_fold}-Fold Best Checkpoint:\n", checkpoint.best_model_path)
         best_checkpoints.append(checkpoint.best_model_path)
+
+        # Save best weight mdoel as pytroch format.
+        os.makedirs(f"../data/models/{model_name}/", exist_ok=True)
+        best_model = CommonLitModel.load_from_checkpoint(checkpoint.best_model_path)
+        torch.save(
+            best_model.roberta_model.state_dict(),
+            f"../data/models/{model_name}/{n_fold}-fold.pth",
+        )
 
     metrics = calc_average_loss(best_checkpoints)
     metric_avg = np.mean(metrics)

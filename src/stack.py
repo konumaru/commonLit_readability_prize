@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
 from dataset import CommonLitDataset
-from models import CommonLitModel, CommonLitRoBERTaModel, RMSELoss
+from models import CommonLitRoBERTaModel, RMSELoss
 from utils.common import load_pickle
 from utils.train_function import train_cross_validate, train_svr, train_xbg
 
@@ -42,32 +42,35 @@ def get_dataloader():
     )
 
 
-def predict_by_ckpt(checkpoints):
+def predict_by_ckpt(
+    num_fold: int = 15,
+    model_name: str = "roberta-base",
+) -> List[np.ndarray]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataloader = get_dataloader()
 
     pred = []
-    for _, ckpt in enumerate(checkpoints):
-        print(f"Predicted by {ckpt}")
+    for i, ckpt in enumerate(range(num_fold)):
+        print(f"Predicted by {i}-fold model.")
 
-        model = CommonLitModel().load_from_checkpoint(ckpt)
-        model = model.to(device)
-        model.eval()
-        model.freeze()
+        model = CommonLitRoBERTaModel().to(device)
+        model.load_state_dict(torch.load(f"../data/models/{model_name}/{i}-fold.pth"))
+        model.eval()  # Ignore dropout and bn layers.
 
         pred_ckpt = []
-        for batch in dataloader:
-            batch["inputs"]["input_ids"] = batch["inputs"]["input_ids"].to(device)
-            batch["inputs"]["attention_mask"] = batch["inputs"]["attention_mask"].to(
-                device
-            )
-            batch["inputs"]["token_type_ids"] = batch["inputs"]["token_type_ids"].to(
-                device
-            )
-            batch["textstat"] = batch["textstat"].to(device)
+        with torch.no_grad():  # Skip gradient calculation
+            for batch in dataloader:
+                batch["inputs"]["input_ids"] = batch["inputs"]["input_ids"].to(device)
+                batch["inputs"]["attention_mask"] = batch["inputs"][
+                    "attention_mask"
+                ].to(device)
+                batch["inputs"]["token_type_ids"] = batch["inputs"][
+                    "token_type_ids"
+                ].to(device)
+                batch["textstat"] = batch["textstat"].to(device)
 
-            z = model(batch)
-            pred_ckpt.append(z)
+                z = model(batch)
+                pred_ckpt.append(z)
 
         pred_ckpt = torch.cat(pred_ckpt, dim=0).detach().cpu().numpy().copy()
         pred.append(pred_ckpt)
@@ -75,28 +78,16 @@ def predict_by_ckpt(checkpoints):
     return pred
 
 
-def get_ckpt_path(checkpoint_path: str) -> List:
-    with open(checkpoint_path, "r") as f:
-        txt = f.readlines()
-
-    model_version = "RoBERTa-Baseline"
-    dir_path = "../data/models/roberta/"
-    checkpoints = [t.strip() for t in txt]
-    checkpoints = [ckpt.replace("../tb_logs/", dir_path) for ckpt in checkpoints]
-    return checkpoints
-
-
 def main():
-    # Predict by RoBERTa
-    ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
-    checkpoints = get_ckpt_path(ckpt_path)
-
-    pred = predict_by_ckpt(checkpoints)
+    num_fold = 15
+    pred = predict_by_ckpt()
 
     train = pd.read_csv("../data/raw/train.csv")[["id", "target"]]
-    train[[f"pred_{i}" for i in range(len(checkpoints))]] = pred
+    train[[f"pred_{i}" for i in range(num_fold)]] = pred
 
-    X = train[[f"pred_{i}" for i in range(len(checkpoints))]].copy().to_numpy()
+    textstat = load_pickle("../data/features/textstats.pkl", verbose=False).to_numpy()
+    X = train[[f"pred_{i}" for i in range(num_fold)]].copy().to_numpy()
+    # X = np.concatenate([X, textstat], axis=1)  # Not improved
     y = train["target"].to_numpy()
 
     cv = model_selection.RepeatedStratifiedKFold(

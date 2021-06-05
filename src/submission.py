@@ -16,9 +16,9 @@ from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
 from dataset import CommonLitDataset
-from models import CommonLitModel
+from models import CommonLitRoBERTaModel
 
-pandarallel.initialize(progress_bar=True)
+pandarallel.initialize()
 
 
 def get_preprocessed_excerpt(src_data: pd.DataFrame) -> pd.DataFrame:
@@ -76,48 +76,41 @@ def get_dataloader(data: pd.DataFrame):
     )
 
 
-def predict_by_ckpt(data, checkpoints):
+def predict_by_ckpt(
+    data: pd.DataFrame,
+    num_fold: int = 15,
+    model_name: str = "roberta-base",
+) -> List[np.ndarray]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataloader = get_dataloader(data)
 
     pred = []
-    for _, ckpt in enumerate(checkpoints):
-        print(f"Predicted by {ckpt}")
+    for i, ckpt in enumerate(range(num_fold)):
+        print(f"Predicted by {i}-fold model.")
 
-        model = CommonLitModel().load_from_checkpoint(ckpt)
-        model = model.to(device)
-        model.eval()
-        model.freeze()
+        model = CommonLitRoBERTaModel().to(device)
+        model.load_state_dict(torch.load(f"../data/models/{model_name}/{i}-fold.pth"))
+        model.eval()  # Ignore dropout and bn layers.
 
         pred_ckpt = []
-        for batch in dataloader:
-            batch["inputs"]["input_ids"] = batch["inputs"]["input_ids"].to(device)
-            batch["inputs"]["attention_mask"] = batch["inputs"]["attention_mask"].to(
-                device
-            )
-            batch["inputs"]["token_type_ids"] = batch["inputs"]["token_type_ids"].to(
-                device
-            )
-            batch["textstat"] = batch["textstat"].to(device)
+        with torch.no_grad():  # Skip gradient calculation
+            for batch in dataloader:
+                batch["inputs"]["input_ids"] = batch["inputs"]["input_ids"].to(device)
+                batch["inputs"]["attention_mask"] = batch["inputs"][
+                    "attention_mask"
+                ].to(device)
+                batch["inputs"]["token_type_ids"] = batch["inputs"][
+                    "token_type_ids"
+                ].to(device)
+                batch["textstat"] = batch["textstat"].to(device)
 
-            z = model(batch)
-            pred_ckpt.append(z)
+                z = model(batch)
+                pred_ckpt.append(z)
 
         pred_ckpt = torch.cat(pred_ckpt, dim=0).detach().cpu().numpy().copy()
         pred.append(pred_ckpt)
 
     return pred
-
-
-def get_ckpt_path(checkpoint_path: str) -> List:
-    with open(checkpoint_path, "r") as f:
-        txt = f.readlines()
-
-    model_version = "RoBERTa-Baseline"
-    dir_path = "../data/models/roberta/"
-    checkpoints = [t.strip() for t in txt]
-    checkpoints = [ckpt.replace("../tb_logs/", dir_path) for ckpt in checkpoints]
-    return checkpoints
 
 
 def predict(data: pd.DataFrame, model_dir: str, n_splits: int) -> np.ndarray:
@@ -127,7 +120,6 @@ def predict(data: pd.DataFrame, model_dir: str, n_splits: int) -> np.ndarray:
             model = pickle.load(file)
 
         pred += model.predict(data) / n_splits
-
     return pred
 
 
@@ -139,20 +131,18 @@ def main():
     test = pd.concat([test, textstat_feat], axis=1)
 
     # Predict by RoBERTa
-    # ckpt_path = "../data/models/roberta/best_checkpoints_0.496413±0.0162.txt"
-    ckpt_path = "../data/models/roberta/best_checkpoints_0.501000±0.0255.txt"
-    checkpoints = get_ckpt_path(ckpt_path)
+    num_fold = 15
+    pred = predict_by_ckpt(test)
+    test[[f"pred_{i}" for i in range(num_fold)]] = pred
 
-    pred = predict_by_ckpt(test, checkpoints)
-    test[[f"pred_{i}" for i in range(len(checkpoints))]] = pred
-
-    X_pred = test[[f"pred_{i}" for i in range(len(checkpoints))]]
+    X_pred = test[[f"pred_{i}" for i in range(num_fold)]]
 
     model_dir = "../data/models/svr/"
     # model_dir = "../data/models/xgb/"
 
+    num_fold = 15
     submission = test[["id"]].copy()
-    submission["target"] = predict(X_pred, model_dir, 5)
+    submission["target"] = predict(X_pred, model_dir, num_fold)
 
     # submission.to_csv("submission.csv", index=False)
 
