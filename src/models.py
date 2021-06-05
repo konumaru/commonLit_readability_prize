@@ -57,7 +57,7 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = 768
+        reg_input_dim = self.config.hidden_size
         self.regression_head = nn.Sequential(
             nn.LayerNorm(reg_input_dim),
             nn.Dropout(0.5),
