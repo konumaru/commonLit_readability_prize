@@ -1,5 +1,6 @@
-experiment_name,CV,LB,comment,is_improved
-RoBERTa
+experiment_name,CV,CV-STD,LB,comment,is_improved
+RoBERTa,0.498506666666666,0.016569227166313125
+Further Trained RoBERTa,0.498700,0.0136
 RoBERTa+SVR
 Further Trained RoBERTa + SVR
 pooler output of Further Trained RoBERTa + SVR
