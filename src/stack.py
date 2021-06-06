@@ -14,7 +14,7 @@ from transformers import AutoTokenizer
 from dataset import CommonLitDataset
 from models import CommonLitRoBERTaModel, RMSELoss
 from utils.common import load_pickle
-from utils.train_function import train_cross_validate, train_svr, train_xbg
+from utils.train_function import train_cross_validate, train_ridge, train_svr, train_xbg
 
 
 def load_data() -> pd.DataFrame:
@@ -80,7 +80,9 @@ def predict_by_ckpt(
 
 def main():
     num_fold = 15
-    pred = predict_by_ckpt()
+    model_name = "roberta-base"
+
+    pred = predict_by_ckpt(num_fold, model_name)
 
     train = pd.read_csv("../data/raw/train.csv")[["id", "target"]]
     train[[f"pred_{i}" for i in range(num_fold)]] = pred
@@ -95,8 +97,16 @@ def main():
     )
     num_bins = int(np.floor(1 + np.log2(len(y))))
     y_cv = pd.cut(y, bins=num_bins, labels=False)
-    train_cross_validate(X, y, cv, train_svr, save_dir="../data/models/svr/", y_cv=y_cv)
-    # train_cross_validate(X, y, cv, train_xbg, save_dir="../data/models/xgb/", y_cv=y_cv)
+
+    train_cross_validate(
+        X, y, cv, train_svr, save_dir=f"../data/models/{model_name}/svr/", y_cv=y_cv
+    )
+    train_cross_validate(
+        X, y, cv, train_xbg, save_dir=f"../data/models/{model_name}/xgb/", y_cv=y_cv
+    )
+    train_cross_validate(
+        X, y, cv, train_ridge, save_dir=f"../data/models/{model_name}/ridge/", y_cv=y_cv
+    )
 
 
 if __name__ == "__main__":

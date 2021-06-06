@@ -30,14 +30,11 @@ def calc_average_loss(ckeckpoints):
 
 def dump_best_checkpoints(best_checkpoints, model_name, metric_avg, metric_std):
     os.makedirs(f"../data/models/{model_name}/", exist_ok=True)
+    # Replace = to -- for kaggle api.
+    ckpt = [ckpt.replace("=", "--") for ckpt in best_checkpoints]
 
-    for ckpt in best_checkpoints:
-        ckpt = ckpt.replace("=", "--")
-
-    with open(
-        f"../data/data/{model_name}/best_checkpoints_{metric_avg:.6f}±{metric_std:.4f}.txt",
-        "w",
-    ) as f:
+    filepath = f"../data/data/{model_name}/best_checkpoints_{metric_avg:.6f}±{metric_std:.4f}.txt"
+    with open(filepath, "w") as f:
         txt = "\n".join(best_checkpoints)
         f.write(txt)
 
@@ -115,14 +112,12 @@ def main():
             f"../data/models/{model_name}/{n_fold}-fold.pth",
         )
 
+    print(best_checkpoints)
+
     metrics = calc_average_loss(best_checkpoints)
     metric_avg = np.mean(metrics)
     metric_std = np.std(metrics)
-
     dump_best_checkpoints(best_checkpoints, model_name, metric_avg, metric_std)
-    print(best_checkpoints)
-
-    print(f"Average Validation Loss: {metric_avg:.6f} ± {metric_std:.4f}")
 
 
 if __name__ == "__main__":

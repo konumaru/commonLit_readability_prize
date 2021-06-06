@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Callable, NoReturn
+from typing import Callable, List, NoReturn
 
 import numpy as np
 import xgboost as xgb
@@ -11,6 +11,14 @@ from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
+
+
+def dump_best_checkpoints(dst_dir: str, metrics: List):
+    os.makedirs(dst_dir, exist_ok=True)
+    filepath = os.path.join(dst_dir, "score.txt")
+    txt = f"averaege,std\n{np.mean(metrics):.6f},{np.std(metrics):.4f}"
+    with open(filepath, "w") as f:
+        f.write(txt)
 
 
 def train_xbg(X, y):
@@ -38,7 +46,7 @@ def train_xbg(X, y):
         eval_set=[(X_train, y_train), (X_valid, y_valid)],
         eval_metric="rmse",
         early_stopping_rounds=20,
-        verbose=10,
+        verbose=100,
     )
     return model
 
@@ -62,7 +70,6 @@ def train_cross_validate(
     train_fn: Callable,
     save_dir: str = "../data/models/tmp/",
     y_cv: np.ndarray = None,
-    verbose: bool = True,
 ) -> NoReturn:
     """Cross validation function.
 
@@ -102,8 +109,9 @@ def train_cross_validate(
 
         metrics.append(metric)
 
-    if verbose:
-        print(f"Average RMSE: {np.mean(metrics):.06f} ± {np.std(metrics):.4f}")
+    results = {"metrics": metrics}
+    dump_best_checkpoints(save_dir, metrics)
+    return results
 
 
 def main():
