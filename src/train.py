@@ -46,11 +46,11 @@ def main():
     DEBUG = 0
     NUM_FOLD = 15 if DEBUG == 0 else 1
 
-    exp_name = "BERT-Baseline"
+    exp_name = "RoBERTa-Baseline"
     num_epoch = 20
     batch_size = 8
     lr = 5e-5
-    model_name = "bert-base-uncased"
+    model_name = "roberta-base"
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
