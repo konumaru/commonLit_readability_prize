@@ -53,7 +53,7 @@ def predict_by_ckpt(
     for i, ckpt in enumerate(range(num_fold)):
         print(f"Predicted by {i}-fold model.")
 
-        model = CommonLitRoBERTaModel().to(device)
+        model = CommonLitRoBERTaModel(model_name_or_path=model_name).to(device)
         model.load_state_dict(torch.load(f"../data/models/{model_name}/{i}-fold.pth"))
         model.eval()  # Ignore dropout and bn layers.
 
@@ -80,7 +80,8 @@ def predict_by_ckpt(
 
 def main():
     num_fold = 15
-    model_name = "further-trained-roberta"  # roberta-base, further-trained-roberta
+    # model_name = "further-trained-roberta"  # roberta-base, further-trained-roberta
+    model_name = "distilroberta-base"
 
     pred = predict_by_ckpt(num_fold, model_name)
 

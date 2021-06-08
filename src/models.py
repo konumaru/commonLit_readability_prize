@@ -118,9 +118,9 @@ class CommonLitModel(pl.LightningModule):
         return z
 
     def configure_optimizers(self):
-        optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
+        # optimizer_grouped_parameters = self._get_optimizer_params(self.roberta_model)
         optimizer = torch.optim.AdamW(
-            optimizer_grouped_parameters,  # self.parameters()
+            self.parameters(),  # optimizer_grouped_parameters
             lr=self.hparams.lr,
             betas=(0.9, 0.999),
             eps=1e-8,

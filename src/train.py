@@ -43,13 +43,15 @@ def main():
     DEBUG = 0
     NUM_FOLD = 15 if DEBUG == 0 else 1
 
-    exp_name = "FurtherTrained-RoBERTa-Baseline"
+    exp_name = "Distil-RoBERTa-Baseline"
     num_epoch = 20
     batch_size = 8
     lr = 5e-5
-    model_name = "roberta-base"
-    model_name_or_path = "../data/extend/further_trained_model/clrp_roberta_base"
-    dump_model_name = "further-trained-roberta"
+    model_name = "distilroberta-base"
+    # model_name_or_path = "../data/extend/further_trained_model/clrp_roberta_base"
+    # dump_model_name = "further-trained-roberta"
+    model_name_or_path = model_name
+    dump_model_name = model_name
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
