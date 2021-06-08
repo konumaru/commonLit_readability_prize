@@ -22,26 +22,25 @@ class RMSELoss(nn.Module):
         return loss
 
 
-class CommonLitBertModel(nn.Module):
-    def __init__(self):
-        super(CommonLitBertModel, self).__init__()
-        self.bert = AutoModel.from_pretrained("bert-base-uncased")
-        self.fc = nn.Linear(768, 1)
+class AttentionHead(nn.Module):
+    def __init__(self, in_features, hidden_dim):
+        super().__init__()
+        self.in_features = in_features
+        self.middle_features = hidden_dim
 
-    def forward(self, batch):
-        ids, mask, token_type_ids = (
-            batch["input_ids"],
-            batch["attention_mask"],
-            batch["token_type_ids"],
-        )
-        _, output = self.bert(
-            ids,
-            attention_mask=mask,
-            token_type_ids=token_type_ids,
-            return_dict=False,
-        )
-        output = self.fc(output)
-        return output
+        self.W = nn.Linear(in_features, hidden_dim)
+        self.V = nn.Linear(hidden_dim, 1)
+        self.out_features = hidden_dim
+
+    def forward(self, features):
+        att = torch.tanh(self.W(features))
+
+        score = self.V(att)
+        attention_weights = torch.softmax(score, dim=1)
+
+        context_vector = attention_weights * features
+        # context_vector = torch.sum(context_vector, dim=1)
+        return context_vector
 
 
 class CommonLitRoBERTaModel(nn.Module):
@@ -57,11 +56,12 @@ class CommonLitRoBERTaModel(nn.Module):
         )
         self.config = self.roberta.config
 
-        reg_input_dim = self.config.hidden_size
+        hidden_size = self.config.hidden_size
+        self.att_head = AttentionHead(hidden_size, hidden_size)
         self.regression_head = nn.Sequential(
-            nn.LayerNorm(reg_input_dim),
+            nn.LayerNorm(hidden_size),
             nn.Dropout(0.5),
-            nn.Linear(reg_input_dim, 1),
+            nn.Linear(hidden_size, 1),
         )
         # Initialize Weights
         self.regression_head.apply(self._init_weights)
@@ -85,7 +85,8 @@ class CommonLitRoBERTaModel(nn.Module):
 
         # NOTE: この段階でtextstat特徴量を追加すると、fine-tuning時の学習率と相性が悪く過学習する可能性が高い、
         # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
-        x = self.regression_head(pooler_output)
+        x = self.att_head(pooler_output)
+        x = self.regression_head(x)
         return x
 
 
