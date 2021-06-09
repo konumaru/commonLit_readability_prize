@@ -81,7 +81,7 @@ def predict_by_ckpt(
 def main():
     num_fold = 15
     # model_name = "further-trained-roberta"  # roberta-base, further-trained-roberta
-    model_name = "distilroberta-base"
+    model_name = "roberta-base"
 
     pred = predict_by_ckpt(num_fold, model_name)
 

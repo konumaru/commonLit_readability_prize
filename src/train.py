@@ -47,7 +47,7 @@ def main():
     num_epoch = 20
     batch_size = 8
     lr = 5e-5
-    model_name = "distilroberta-base"
+    model_name = "roberta-base"
     # model_name_or_path = "../data/extend/further_trained_model/clrp_roberta_base"
     # dump_model_name = "further-trained-roberta"
     model_name_or_path = model_name
