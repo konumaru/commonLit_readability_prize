@@ -200,7 +200,7 @@ class CommonLitModel(pl.LightningModule):
                     and any(nd in n for nd in group1)
                 ],
                 "weight_decay_rate": 0.01,
-                "lr": learning_rate / 2.6,
+                "lr": learning_rate * 0.0,
             },
             {
                 "params": [
@@ -210,7 +210,7 @@ class CommonLitModel(pl.LightningModule):
                     and any(nd in n for nd in group2)
                 ],
                 "weight_decay_rate": 0.01,
-                "lr": learning_rate,
+                "lr": learning_rate * 1e-1,
             },
             {
                 "params": [
@@ -220,7 +220,7 @@ class CommonLitModel(pl.LightningModule):
                     and any(nd in n for nd in group3)
                 ],
                 "weight_decay_rate": 0.01,
-                "lr": learning_rate * 2.6,
+                "lr": learning_rate,
             },
             {
                 "params": [
@@ -238,7 +238,7 @@ class CommonLitModel(pl.LightningModule):
                     if any(nd in n for nd in no_decay) and any(nd in n for nd in group1)
                 ],
                 "weight_decay_rate": 0.0,
-                "lr": learning_rate / 2.6,
+                "lr": learning_rate * 0.0,
             },
             {
                 "params": [
@@ -247,7 +247,7 @@ class CommonLitModel(pl.LightningModule):
                     if any(nd in n for nd in no_decay) and any(nd in n for nd in group2)
                 ],
                 "weight_decay_rate": 0.0,
-                "lr": learning_rate,
+                "lr": learning_rate * 1e-1,
             },
             {
                 "params": [
@@ -256,13 +256,13 @@ class CommonLitModel(pl.LightningModule):
                     if any(nd in n for nd in no_decay) and any(nd in n for nd in group3)
                 ],
                 "weight_decay_rate": 0.0,
-                "lr": learning_rate * 2.6,
+                "lr": learning_rate,
             },
             {
                 "params": [
                     p for n, p in model.named_parameters() if "roberta" not in n
                 ],
-                "lr": 1e-3,  # learning_rate
+                "lr": 2e-4,  # learning_rate
                 "momentum": 0.99,
             },
         ]
