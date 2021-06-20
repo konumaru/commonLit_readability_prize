@@ -24,10 +24,10 @@ seed_everything()
 
 """
 TODO:
-- Dataset, Dataloader, Datamodule の定義
-- モデルを更新
-- paramerter を cli から指定できるようにする
-- cpu で学習の debug をできるようにする
+- [x] Dataset, Dataloader, Datamodule の定義
+- [ ] モデルを更新
+- [ ] paramerter を cli から指定できるようにする
+- [ ] cpu で学習の debug をできるようにする
 """
 
 

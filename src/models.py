@@ -23,7 +23,7 @@ class RMSELoss(nn.Module):
 
 
 class AttentionHead(nn.Module):
-    def __init__(self, in_features, hidden_dim):
+    def __init__(self, in_features, hidden_dim, num_targets):
         super().__init__()
         self.in_features = in_features
         self.middle_features = hidden_dim
@@ -34,12 +34,11 @@ class AttentionHead(nn.Module):
 
     def forward(self, features):
         att = torch.tanh(self.W(features))
-
         score = self.V(att)
         attention_weights = torch.softmax(score, dim=1)
 
         context_vector = attention_weights * features
-        # context_vector = torch.sum(context_vector, dim=1)
+        context_vector = torch.sum(context_vector, dim=1)
         return context_vector
 
 
@@ -57,13 +56,16 @@ class CommonLitRoBERTaModel(nn.Module):
         self.config = self.roberta.config
 
         hidden_size = self.config.hidden_size
-        self.att_head = AttentionHead(hidden_size, hidden_size)
+        self.att_head = AttentionHead(hidden_size, hidden_size, 1)
         self.regression_head = nn.Sequential(
             nn.LayerNorm(hidden_size),
+            nn.Dropout(0.5),
+            nn.Linear(hidden_size, hidden_size),
             nn.Dropout(0.5),
             nn.Linear(hidden_size, 1),
         )
         # Initialize Weights
+        self.att_head.apply(self._init_weights)
         self.regression_head.apply(self._init_weights)
 
     def _init_weights(self, module):
@@ -81,11 +83,11 @@ class CommonLitRoBERTaModel(nn.Module):
 
     def forward(self, batch):
         outputs = self.roberta(**batch["inputs"])
-        pooler_output = outputs.pooler_output
 
         # NOTE: この段階でtextstat特徴量を追加すると、fine-tuning時の学習率と相性が悪く過学習する可能性が高い、
         # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
-        x = self.att_head(pooler_output)
+        # x = self.att_head(outputs.last_hidden_state)
+        x = outputs.pooler_output
         x = self.regression_head(x)
         return x
 
@@ -190,7 +192,7 @@ class CommonLitModel(pl.LightningModule):
                     if not any(nd in n for nd in no_decay)
                     and not any(nd in n for nd in group_all)
                 ],
-                "weight_decay_rate": 0.01,
+                "weight_decay_rate": 0.0,
             },
             {
                 "params": [
@@ -199,8 +201,8 @@ class CommonLitModel(pl.LightningModule):
                     if not any(nd in n for nd in no_decay)
                     and any(nd in n for nd in group1)
                 ],
-                "weight_decay_rate": 0.01,
-                "lr": learning_rate * 0.0,
+                "weight_decay_rate": 0.0,
+                "lr": learning_rate * 1e-1,
             },
             {
                 "params": [
@@ -209,8 +211,8 @@ class CommonLitModel(pl.LightningModule):
                     if not any(nd in n for nd in no_decay)
                     and any(nd in n for nd in group2)
                 ],
-                "weight_decay_rate": 0.01,
-                "lr": learning_rate * 1e-1,
+                "weight_decay_rate": 0.01,  #  0.0,
+                "lr": learning_rate * 0.5,
             },
             {
                 "params": [
@@ -219,7 +221,7 @@ class CommonLitModel(pl.LightningModule):
                     if not any(nd in n for nd in no_decay)
                     and any(nd in n for nd in group3)
                 ],
-                "weight_decay_rate": 0.01,
+                "weight_decay_rate": 0.0,
                 "lr": learning_rate,
             },
             {
@@ -238,7 +240,7 @@ class CommonLitModel(pl.LightningModule):
                     if any(nd in n for nd in no_decay) and any(nd in n for nd in group1)
                 ],
                 "weight_decay_rate": 0.0,
-                "lr": learning_rate * 0.0,
+                "lr": learning_rate * 1e-1,
             },
             {
                 "params": [
@@ -247,7 +249,7 @@ class CommonLitModel(pl.LightningModule):
                     if any(nd in n for nd in no_decay) and any(nd in n for nd in group2)
                 ],
                 "weight_decay_rate": 0.0,
-                "lr": learning_rate * 1e-1,
+                "lr": learning_rate * 0.5,
             },
             {
                 "params": [
@@ -262,6 +264,7 @@ class CommonLitModel(pl.LightningModule):
                 "params": [
                     p for n, p in model.named_parameters() if "roberta" not in n
                 ],
+                "weight_decay_rate": 0.0,
                 "lr": 2e-4,  # learning_rate
                 "momentum": 0.99,
             },
@@ -301,3 +304,6 @@ class CommonLitModel(pl.LightningModule):
 
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_metric", metric, prog_bar=True)
+
+    def get_roberta_state_dict(self):
+        return self.roberta_model.state_dict()
