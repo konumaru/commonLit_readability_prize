@@ -1,41 +1,23 @@
+import os
 import pathlib
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import (
-    KFold,
-    RepeatedKFold,
-    RepeatedStratifiedKFold,
-    StratifiedKFold,
-)
+from sklearn import model_selection
 
 from utils.common import load_pickle, seed_everything
 
 seed_everything()
 
 
-def main():
-    dump_dir = pathlib.Path("../data/split")
-    data = pd.read_csv("../data/raw/train.csv")
-
-    textstat = load_pickle("../data/features/textstats.pkl")
-
-    data = pd.concat([data, textstat], axis=1)
-    data.drop(["id", "url_legal", "license", "standard_error"], axis=1, inplace=True)
-
-    print(data.head())
-
+def split_fold(data: pd.DataFrame, seed: int = 42):
+    dump_dir = pathlib.Path(f"../data/working/seed{seed}/split/")
+    os.makedirs(dump_dir, exist_ok=True)
     # Ref: https://www.kaggle.com/abhishek/step-1-create-folds
     num_bins = int(np.floor(1 + np.log2(len(data))))
     target_bins = pd.cut(data["target"], bins=num_bins, labels=False)
 
-    # cv = KFold(n_splits=5, shuffle=True, random_state=42)
-    # cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-    # NOTE: Local cv is local cv is 0.517480 ± 0.0216
-    # cv = RepeatedKFold(n_splits=5,  n_repeats=3, random_state=42)
-    # NOTE: Local cv is 0.514975 ± 0.0203
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=42)
+    cv = model_selection.StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     for n_fold, (train_idx, valid_idx) in enumerate(cv.split(data, target_bins)):
 
         train = data.loc[train_idx, :]
@@ -56,6 +38,15 @@ def main():
             f"\tValid Target Average: {valid.target.mean():.06f}"
             + f"\tValid Size={valid.shape[0]}"
         )
+
+
+def main():
+    SEEDS = [42, 422, 12, 123, 1234]
+    data = pd.read_csv("../data/raw/train.csv")
+
+    for seed in SEEDS:
+        print(f"\n=== Seed{seed} ===")
+        split_fold(data, seed)
 
 
 if __name__ == "__main__":
