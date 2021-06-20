@@ -17,6 +17,18 @@ from transformers import AutoTokenizer
 
 from dataset import CommonLitDataModule
 from models import CommonLitModel
+from utils.common import load_pickle, seed_everything
+
+seed_everything()
+
+
+"""
+TODO:
+- Dataset, Dataloader, Datamodule の定義
+- モデルを更新
+- paramerter を cli から指定できるようにする
+- cpu で学習の debug をできるようにする
+"""
 
 
 def calc_average_loss(ckeckpoints):

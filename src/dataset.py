@@ -24,11 +24,8 @@ class CommonLitDataset(torch.utils.data.Dataset):
 
         if is_test:
             self.target = np.zeros((len(data), 1))
-            self.textstat = np.zeros((len(data), 1))
         else:
             self.target = data[["target"]].to_numpy()
-            textstat = data.drop(["excerpt", "target"], axis=1)
-            self.textstat = textstat.to_numpy()
 
     def __len__(self):
         return len(self.excerpt)
@@ -43,7 +40,6 @@ class CommonLitDataset(torch.utils.data.Dataset):
             return_attention_mask=True,
             return_token_type_ids=True,
         )
-        textstat = self.textstat[idx]
         target = self.target[idx]
 
         return {
@@ -56,7 +52,6 @@ class CommonLitDataset(torch.utils.data.Dataset):
                     inputs["token_type_ids"], dtype=torch.long
                 ),
             },
-            "textstat": torch.tensor(textstat, dtype=torch.float32),
             "target": torch.tensor(target, dtype=torch.float32),
         }
 
@@ -76,8 +71,6 @@ class CommonLitDataModule(pl.LightningDataModule):
         self.valid = pd.read_pickle(self.data_dir / "valid.pkl")
 
     def train_dataloader(self):
-        sample_rate = 0.2
-
         dataset = CommonLitDataset(self.train, self.tokenizer)
         dataloader = DataLoader(
             dataset,
@@ -103,15 +96,16 @@ class CommonLitDataModule(pl.LightningDataModule):
 
 
 if __name__ == "__main__":
-    data = pd.read_pickle("../data/split/fold_0/train.pkl")
+    seed = 42
+    data = pd.read_pickle(f"../data/working/seed{seed}/split/fold_0/train.pkl")
 
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
-    dataset = CommonLitDataset(data, tokenizer)
+    dataset = CommonLitDataset(data, tokenizer, 256, is_test=False)
 
     datamodule = CommonLitDataModule(
-        data_dir="../data/split/fold_0/",
+        data_dir=f"../data/working/seed{seed}/split/fold_0",
         tokenizer=tokenizer,
-        batch_size=4,
+        batch_size=2,
     )
 
     batch = iter(datamodule.train_dataloader()).next()
