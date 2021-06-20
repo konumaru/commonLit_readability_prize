@@ -132,6 +132,9 @@ dmypy.json
 *.pkl
 *.pickle
 tb_logs/
+lightning_logs/
+data/working/
+!data/working/.gitkeep
 notebook/ckpt/
 data/extend/*
 *.ckpt

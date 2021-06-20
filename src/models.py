@@ -96,7 +96,7 @@ class CommonLitModel(pl.LightningModule):
     def __init__(
         self,
         lr: float = 5e-5,
-        num_epoch: int = 10,
+        num_epochs: int = 10,
         roberta_model_name_or_path: str = "roberta-base",
         output_hidden_states: bool = False,
         lr_scheduler: str = "linear",
@@ -130,7 +130,7 @@ class CommonLitModel(pl.LightningModule):
             weight_decay=0,
         )
 
-        total_steps = self.train_dataloader_len * self.hparams.num_epoch
+        total_steps = self.train_dataloader_len * self.hparams.num_epochs
         if self.hparams.lr_scheduler == "linear":
             # Linear scheduler
             lr_scheduler = get_linear_schedule_with_warmup(
