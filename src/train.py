@@ -1,7 +1,12 @@
 import argparse
+import datetime
+import glob
+import json
 import os
 import pathlib
 import re
+import shutil
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -9,35 +14,54 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import transformers
+from kaggle.api.kaggle_api_extended import KaggleApi
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from sklearn.metrics import mean_squared_error
-from transformers import AutoTokenizer
+from transformers import AutoModel, AutoTokenizer
 
 from dataset import CommonLitDataModule
-from models import CommonLitModel
+from models import CommonLitModel, RMSELoss
 from utils.common import load_pickle, seed_everything
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true", help="is use debug mode")
+    # Below is model paramerters.
+    parser.add_argument("--lr", type=float, default=2e-5, help="learning rate")
+    parser.add_argument("--num_epochs", type=int, default=15, help="number of epochs")
+    parser.add_argument("--batch_size", type=int, default=16, help="learning rate")
+    parser.add_argument(
+        "--model_name_or_path",
+        type=str,
+        default="roberta-base",
+        help="pretrained model name or path",
+    )
 
     args = parser.parse_args()
     return args
 
 
-def train():
-    seed = 42
-    debug = True
-    num_fold = 5
+def remove_glob(filepath, recursive=True):
+    for p in glob.glob(filepath, recursive=recursive):
+        if os.path.isfile(p):
+            os.remove(p)
 
-    lr = 2e-5
-    num_epochs = 1
-    batch_size = 16
-    model_name_or_path = "roberta-base"
 
-    work_dir = pathlib.Path(f"../data/working/seed{seed}")
+def train(
+    seed: int = 42,
+    debug: bool = True,
+    num_fold: int = 5,
+    lr: float = 2e-5,
+    num_epochs: int = 15,
+    batch_size: int = 16,
+    model_name_or_path: str = "roberta-base",
+):
+    work_dir = pathlib.Path(f"../data/models/{model_name_or_path}/seed{seed}")
+    os.makedirs(work_dir, exist_ok=True)
+
+    remove_glob(str(work_dir / "models"))
     os.makedirs(work_dir / "models", exist_ok=True)
 
     data = pd.read_csv("../data/raw/train.csv")
@@ -47,7 +71,7 @@ def train():
     oof = np.zeros(data.shape[0])
     for fold in range(num_fold):
         datamodule = CommonLitDataModule(
-            work_dir / f"split/fold_{fold}", tokenizer, batch_size
+            f"../data/working/seed{seed}/split/fold_{fold}", tokenizer, batch_size
         )
         model = CommonLitModel(
             lr=lr,
@@ -82,7 +106,7 @@ def train():
                 callbacks=[lr_monitor, checkpoint],
                 max_epochs=num_epochs,
                 stochastic_weight_avg=True,
-                val_check_interval=0.1,
+                val_check_interval=0.05,
                 limit_train_batches=0.9,
                 limit_val_batches=0.9,
                 fast_dev_run=debug,
@@ -91,14 +115,12 @@ def train():
 
         print(f"Fold-{fold} Best Checkpoint:\n", checkpoint.best_model_path)
         best_checkpoints.append(checkpoint.best_model_path)
-
         # Save best weight mdoel as pytroch format.
         best_model = CommonLitModel.load_from_checkpoint(checkpoint.best_model_path)
         torch.save(
             best_model.roberta_model.state_dict(),
             work_dir / f"models/fold_{fold}.pth",
         )
-
         # Predict oof
         if debug:
             pred = np.random.rand(len(datamodule.valid.index))
@@ -113,14 +135,68 @@ def train():
     np.save(work_dir / "oof.npy", oof)
 
     metric = mean_squared_error(data["target"].values, oof, squared=False)
-    with open(work_dir / f"metric={metric:.6f}.txt", "w") as f:
+    with open(work_dir / f"metric_{metric:.6f}.txt", "w") as f:
         f.write("")
+
+
+def upload_to_kaggle_dataset(
+    user_id: str,
+    dataset_title: str,
+    upload_dir: str,
+    message: str,
+):
+    dataset_metadata = {}
+    dataset_metadata["id"] = f"{user_id}/{dataset_title}"
+    dataset_metadata["licenses"] = [{"name": "CC0-1.0"}]
+    dataset_metadata["title"] = dataset_title
+
+    with open(os.path.join(upload_dir, "dataset-metadata.json"), "w") as f:
+        json.dump(dataset_metadata, f, indent=4)
+
+    api = KaggleApi()
+    api.authenticate()
+
+    if dataset_metadata["id"] not in [
+        str(d) for d in api.dataset_list(user=user_id, search=dataset_title)
+    ]:
+        # If dataset is not exist, run below.
+        api.dataset_create_new(
+            folder=upload_dir,
+            convert_to_csv=False,
+            dir_mode="skip",
+        )
+    else:
+        api.dataset_create_version(
+            folder=upload_dir,
+            version_notes=message,
+            convert_to_csv=False,
+            delete_old_versions=True,
+            dir_mode="zip",
+        )
 
 
 def main():
     args = parse_args()
 
-    train()
+    SEEDS = [42, 422, 12, 123, 1234]
+    for seed in SEEDS:
+        train(
+            seed=seed,
+            debug=args.debug,
+            num_fold=5,
+            # Below is model paramerters.
+            lr=args.lr,
+            num_epochs=args.num_epochs,
+            batch_size=args.batch_size,
+            model_name_or_path=args.model_name_or_path,
+        )
+
+    upload_to_kaggle_dataset(
+        user_id="konumaru",
+        dataset_title="commonlit-fine-tuned-roberta-base",
+        upload_dir=f"../data/models/{args.model_name_or_path}",
+        message=datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"),
+    )
 
 
 if __name__ == "__main__":

@@ -83,12 +83,10 @@ class CommonLitRoBERTaModel(nn.Module):
 
     def forward(self, batch):
         outputs = self.roberta(**batch["inputs"])
-
         # NOTE: この段階でtextstat特徴量を追加すると、fine-tuning時の学習率と相性が悪く過学習する可能性が高い、
         # x = torch.cat((pooler_output, batch["textstat"]), dim=1)
         # x = self.att_head(outputs.last_hidden_state)
-        x = outputs.pooler_output
-        x = self.regression_head(x)
+        x = self.regression_head(outputs.pooler_output)
         return x
 
 
