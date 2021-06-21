@@ -141,4 +141,6 @@ data/extend/*
 *.pth
 data/models/*/*.pth
 data/models/*/*.bin
+data/models/**/*.npy
+data/models/**/*.txt
 !data/models/.gitkeep
