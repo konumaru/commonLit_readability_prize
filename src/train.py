@@ -130,8 +130,6 @@ def train(
 
         oof[datamodule.valid.index] = pred
 
-        break
-
     np.save(work_dir / "oof.npy", oof)
 
     metric = mean_squared_error(data["target"].values, oof, squared=False)
