@@ -1,5 +1,11 @@
 # Chatch Up Public Notebooks
 
+## 2021-06-23
+
+### Ensemble Public Notebooks
+
+https://www.kaggle.com/mobassir/commonlit-readability-tensorflow-torch-ensemble
+
 ## 2021-05-20
 
 ### RoBerta + SVM, LB = 0.478
