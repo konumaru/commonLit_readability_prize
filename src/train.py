@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import transformers
-from kaggle.api.kaggle_api_extended import KaggleApi
+# from kaggle.api.kaggle_api_extended import KaggleApi
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from sklearn.metrics import mean_squared_error
@@ -149,40 +149,40 @@ def train(
         f.write("")
 
 
-def upload_to_kaggle_dataset(
-    user_id: str,
-    dataset_title: str,
-    upload_dir: str,
-    message: str,
-):
-    dataset_metadata = {}
-    dataset_metadata["id"] = f"{user_id}/{dataset_title}"
-    dataset_metadata["licenses"] = [{"name": "CC0-1.0"}]
-    dataset_metadata["title"] = dataset_title
+# def upload_to_kaggle_dataset(
+#     user_id: str,
+#     dataset_title: str,
+#     upload_dir: str,
+#     message: str,
+# ):
+#     dataset_metadata = {}
+#     dataset_metadata["id"] = f"{user_id}/{dataset_title}"
+#     dataset_metadata["licenses"] = [{"name": "CC0-1.0"}]
+#     dataset_metadata["title"] = dataset_title
 
-    with open(os.path.join(upload_dir, "dataset-metadata.json"), "w") as f:
-        json.dump(dataset_metadata, f, indent=4)
+#     with open(os.path.join(upload_dir, "dataset-metadata.json"), "w") as f:
+#         json.dump(dataset_metadata, f, indent=4)
 
-    api = KaggleApi()
-    api.authenticate()
+#     api = KaggleApi()
+#     api.authenticate()
 
-    if dataset_metadata["id"] not in [
-        str(d) for d in api.dataset_list(user=user_id, search=dataset_title)
-    ]:
-        # If dataset is not exist, run below.
-        api.dataset_create_new(
-            folder=upload_dir,
-            convert_to_csv=False,
-            dir_mode="skip",
-        )
-    else:
-        api.dataset_create_version(
-            folder=upload_dir,
-            version_notes=message,
-            convert_to_csv=False,
-            delete_old_versions=True,
-            dir_mode="zip",
-        )
+#     if dataset_metadata["id"] not in [
+#         str(d) for d in api.dataset_list(user=user_id, search=dataset_title)
+#     ]:
+#         # If dataset is not exist, run below.
+#         api.dataset_create_new(
+#             folder=upload_dir,
+#             convert_to_csv=False,
+#             dir_mode="skip",
+#         )
+#     else:
+#         api.dataset_create_version(
+#             folder=upload_dir,
+#             version_notes=message,
+#             convert_to_csv=False,
+#             delete_old_versions=True,
+#             dir_mode="zip",
+#         )
 
 
 def main():
@@ -203,12 +203,13 @@ def main():
     )
 
     if args.upload_dataset:
-        upload_to_kaggle_dataset(
-            user_id="konumaru",
-            dataset_title="commonlit-fine-tuned-roberta-base",
-            upload_dir=f"../data/models/{args.model_name_or_path}",
-            message=datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"),
-        )
+        pass
+        # upload_to_kaggle_dataset(
+        #     user_id="konumaru",
+        #     dataset_title="commonlit-fine-tuned-roberta-base",
+        #     upload_dir=f"../data/models/{args.model_name_or_path}",
+        #     message=datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"),
+        # )
 
 
 if __name__ == "__main__":
