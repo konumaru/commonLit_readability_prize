@@ -126,7 +126,7 @@ def train(
             pred = np.random.rand(len(datamodule.valid.index))
         else:
             pred = trainer.predict(dataloaders=datamodule.val_dataloader())
-            pred = torch.cat(pred, dim=0).detach().cpu().numpy()
+            pred = torch.cat(pred, dim=0).detach().cpu().numpy().ravel()
             # pred = np.concatenate(pred, axis=0).ravel()
 
         oof[datamodule.valid.index] = pred
