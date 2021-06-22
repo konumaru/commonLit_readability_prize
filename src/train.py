@@ -28,7 +28,11 @@ from utils.common import load_pickle, seed_everything
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true", help="is use debug mode")
+    parser.add_argument(
+        "--dump_dir", type=str, default="../data/models", help="learning rate"
+    )
     # Below is model paramerters.
+    parser.add_argument("--seed", type=int, default=42, help="fix random seed")
     parser.add_argument("--lr", type=float, default=2e-5, help="learning rate")
     parser.add_argument("--num_epochs", type=int, default=15, help="number of epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="learning rate")
@@ -51,6 +55,7 @@ def remove_glob(filepath, recursive=True):
 
 def train(
     seed: int = 42,
+    dump_dir: str = "../data/models",
     debug: bool = True,
     num_fold: int = 5,
     lr: float = 2e-5,
@@ -58,7 +63,7 @@ def train(
     batch_size: int = 16,
     model_name_or_path: str = "roberta-base",
 ):
-    work_dir = pathlib.Path(f"../data/models/{model_name_or_path}/seed{seed}")
+    work_dir = pathlib.Path(os.path.join(dump_dir, f"{model_name_or_path}/seed{seed}"))
     os.makedirs(work_dir, exist_ok=True)
 
     remove_glob(str(work_dir / "models"))
@@ -177,18 +182,19 @@ def upload_to_kaggle_dataset(
 def main():
     args = parse_args()
 
-    SEEDS = [42, 422, 12, 123, 1234]
-    for seed in SEEDS:
-        train(
-            seed=seed,
-            debug=args.debug,
-            num_fold=5,
-            # Below is model paramerters.
-            lr=args.lr,
-            num_epochs=args.num_epochs,
-            batch_size=args.batch_size,
-            model_name_or_path=args.model_name_or_path,
-        )
+    # SEEDS = [42, 422, 12, 123, 1234]
+    # for seed in SEEDS:
+    train(
+        seed=args.seed,
+        dump_dir=args.dump_dir,
+        debug=args.debug,
+        num_fold=5,
+        # Below is model paramerters.
+        lr=args.lr,
+        num_epochs=args.num_epochs,
+        batch_size=args.batch_size,
+        model_name_or_path=args.model_name_or_path,
+    )
 
     upload_to_kaggle_dataset(
         user_id="konumaru",
