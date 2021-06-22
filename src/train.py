@@ -77,7 +77,7 @@ def train(
     os.makedirs(work_dir / "models", exist_ok=True)
 
     data = pd.read_csv("../data/raw/train.csv")
-    tokenizer = AutoTokenizer.from_pretrained(str(model_name_or_path))
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
 
     best_checkpoints = []
     oof = np.zeros(data.shape[0])
@@ -91,7 +91,7 @@ def train(
             lr_scheduler="cosine",
             lr_interval="step",
             lr_warmup_step=int(len(datamodule.train_dataloader()) * 0.06),
-            roberta_model_name_or_path=str(model_name_or_path),
+            roberta_model_name_or_path="roberta-base",
             train_dataloader_len=len(datamodule.train_dataloader()),
         )
         # Callbacks
@@ -150,6 +150,7 @@ def train(
         f.write("")
 
 
+# TODO: upload の実行スクリプトは別ファイルにする
 # def upload_to_kaggle_dataset(
 #     user_id: str,
 #     dataset_title: str,
