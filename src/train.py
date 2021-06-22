@@ -14,6 +14,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import transformers
+
 # from kaggle.api.kaggle_api_extended import KaggleApi
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -76,7 +77,7 @@ def train(
     os.makedirs(work_dir / "models", exist_ok=True)
 
     data = pd.read_csv("../data/raw/train.csv")
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+    tokenizer = AutoTokenizer.from_pretrained(str(model_name_or_path))
 
     best_checkpoints = []
     oof = np.zeros(data.shape[0])
@@ -90,7 +91,7 @@ def train(
             lr_scheduler="cosine",
             lr_interval="step",
             lr_warmup_step=int(len(datamodule.train_dataloader()) * 0.06),
-            roberta_model_name_or_path=model_name_or_path,
+            roberta_model_name_or_path=str(model_name_or_path),
             train_dataloader_len=len(datamodule.train_dataloader()),
         )
         # Callbacks
