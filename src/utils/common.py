@@ -12,7 +12,7 @@ import torch
 
 def seed_everything(seed: int = 42):
     np.random.seed(seed)
-    pl.seed_everything(seed, workers=True)
+    pl.seed_everything(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
