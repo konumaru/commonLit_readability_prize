@@ -43,6 +43,12 @@ def parse_args():
         help="pretrained model name or path",
     )
 
+    parser.add_argument(
+        "--upload_dataset",
+        action="store_true",
+        help="set arg if you upload models to kaggle dataset",
+    )
+
     args = parser.parse_args()
     return args
 
@@ -196,12 +202,13 @@ def main():
         model_name_or_path=args.model_name_or_path,
     )
 
-    upload_to_kaggle_dataset(
-        user_id="konumaru",
-        dataset_title="commonlit-fine-tuned-roberta-base",
-        upload_dir=f"../data/models/{args.model_name_or_path}",
-        message=datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"),
-    )
+    if args.upload_dataset:
+        upload_to_kaggle_dataset(
+            user_id="konumaru",
+            dataset_title="commonlit-fine-tuned-roberta-base",
+            upload_dir=f"../data/models/{args.model_name_or_path}",
+            message=datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"),
+        )
 
 
 if __name__ == "__main__":
