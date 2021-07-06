@@ -1,5 +1,10 @@
 # Catch Up Discussion
 
+## 2021-07-06
+
+この時点で特に読むものがなくなってきている感覚がある。
+コンペ締め切り１ヶ月前。
+
 ## 2021-06-09
 
 - [Target の Noise に対する対処案](https://www.kaggle.com/c/commonlitreadabilityprize/discussion/244431)
