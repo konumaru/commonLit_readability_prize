@@ -8,7 +8,7 @@
 
 ## Evaluation
 
-- RMSE
+- The evaluation is RMSE
 
 ### Cross Validation Strategy
 
@@ -68,8 +68,15 @@ The RMSE that averages all of the above is 0.46127848800757043
 Text features were created based on this [notebook](notebook/create-text-features.ipynb).
 The above features were selected using the Stepwise method.
 
-We arbitrarily removed features to account for overlearning tendencies.
+I arbitrarily removed features to account for overlearning tendencies.
 
-## Not improve
+## Not improve experiments
 
-## Others
+- Some custom heads
+  - LSTM head
+  - GRU head
+  - 1DCNN head
+  - roberta-base + mean pool head
+- Concat last 2 hidden state layers
+- SWA
+- Weight initialize of custom heads and regression layer
