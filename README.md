@@ -62,7 +62,7 @@ Text features were created based on this [notebook](notebook/create-text-feature
 The above features were selected using the Stepwise method.
 I removed features to account for overfit.
 
-## Not improve experiments
+## Not worked for me
 
 - Some custom heads
   - LSTM head
