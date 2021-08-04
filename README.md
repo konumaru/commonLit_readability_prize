@@ -66,9 +66,9 @@ The RMSE that averages all of the above is 0.46127848800757043
 ### Text features
 
 Text features were created based on this [notebook](notebook/create-text-features.ipynb).
-The above features were selected using the Stepwise method.
 
-I arbitrarily removed features to account for overlearning tendencies.
+The above features were selected using the Stepwise method.
+I removed features to account for overfit.
 
 ## Not improve experiments
 
@@ -80,3 +80,10 @@ I arbitrarily removed features to account for overlearning tendencies.
 - Concat last 2 hidden state layers
 - SWA
 - Weight initialize of custom heads and regression layer
+
+## Development Enviroment
+
+- Local
+- GCP
+- Google Colab
+- Kaggle
