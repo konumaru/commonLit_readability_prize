@@ -4,6 +4,8 @@
 
 ## Summary
 
+The RMSE of the final result is 0.4607133200425228 with 0.7 \* ensemble + 0.3 \* stacking
+
 ![img](https://user-images.githubusercontent.com/17187586/127723772-b0c4e68a-65e4-4082-b53e-88cad7908205.png)
 
 ## Evaluation
@@ -20,8 +22,6 @@ target_bins = pd.cut(data["target"], bins=num_bins, labels=False)
 ```
 
 ## Models
-
-The RMSE of the final result is 0.4607133200425228 with 0.7 \* ensemble + 0.3 \* stacking
 
 ### Ensemble single models
 
