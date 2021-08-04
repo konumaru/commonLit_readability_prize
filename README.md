@@ -25,35 +25,27 @@ target_bins = pd.cut(data["target"], bins=num_bins, labels=False)
 
 ### Ensemble single models
 
-- roberta-base + attention head + layer norm
-  - RMSE: 0.4736949670144576
-- roberta-base + attention head
-  - RMSE: RMSE: 0.4709106082952253
-- roberta-base-squad2 + attention head
-  - RMSE: RMSE: 0.4777408091672718
-- roberta-large + attention head
-  - RMSE: 0.4730063474053594
-- roberta-large-squad2 + attention head
-  - RMSE: 0.4711161440071689
-- roberta-large + mean pool head
-  - RMSE: 0.47477908722085643
+|                                            |   RMSE   |
+| :----------------------------------------: | :------: |
+| roberta-base + attention head + layer norm | 0.473694 |
+|       roberta-base + attention head        | 0.470910 |
+|    roberta-base-squad2 + attention head    | 0.477740 |
+|       roberta-large + attention head       | 0.473006 |
+|   roberta-large-squad2 + attention head    | 0.471116 |
+|       roberta-large + mean pool head       | 0.474779 |
 
 The RMSE that averages all of the above is 0.46214926662874833
 
 ### Stacking
 
-- Ridge
-  - RMSE: 0.462588524073919
-- Baysian Ridge
-  - RMSE: 0.46239263410931475
-- MLP
-  - RMSE: 0.5085765790075847
-- SVR
-  - RMSE: 0.4688521101657648
-- XGB
-  - RMSE: 0.4632751688391198
-- Random Forest
-  - RMSE: 0.4884084753993871
+|               |   RMSE   |
+| :-----------: | :------: |
+|     Ridge     | 0.462588 |
+| Baysian Ridge | 0.462392 |
+|      MLP      | 0.508576 |
+|      SVR      | 0.468852 |
+|      XGB      | 0.463275 |
+| Random Forest | 00.48840 |
 
 The RMSE that averages all of the above is 0.46127848800757043
 
